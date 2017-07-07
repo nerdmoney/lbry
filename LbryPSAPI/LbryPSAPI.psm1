@@ -1,53 +1,4 @@
-﻿function Get-JsonContent(){
-	[CmdletBinding()]
-	
-	param (
-	[Parameter(Mandatory = $true, Position = 0)]
-	[String]$Method,
-	[Parameter(Mandatory = $false, Position = 1)]
-	[Hashtable]$Params
-	)
-	$uri = "http://localhost:5279/lbryapi"
-	if(($Params -eq "") -or ($Params -eq $null)){
-		$data = ConvertTo-Json @{method = $method}
-	} else{
-		$data = ConvertTo-Json @{method = $method;params = $params}
-	}
-	$data
-	$output = Invoke-WebRequest -Uri $uri -Method Post -Body $data
-	$content = ConvertFrom-Json $output.Content
-
-$content.result	
-
-}
-
-function Sync-Blob(){
-	[CmdletBinding()]
-
-	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "AnnounceAll")]	
-		[Switch]$AnnounceAll = $false,
-		[Parameter(Mandatory = $true, ParameterSetName = "ReflectAll")]
-		[Switch]$ReflectAll = $false
-	)
-
-	if ($AnnounceAll) {$method = "blob_announce_all"}
-	if ($ReflectAll) {$method = "blob_reflect_all"}
-	
-	Get-JsonContent -Method $method
-}
-
-function Remove-Blob(){
-	[CmdletBinding()]
-
-	$method = "blob_delete"
-	
-	Get-JsonContent -Method $method
-}
-
-function Get-Blob(){
-	[CmdletBinding()]
-	
+﻿function Get-Blob() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$BlobHash,
@@ -59,20 +10,43 @@ function Get-Blob(){
 		[Parameter(Mandatory = $false)]
 		[String]$PaymentRateManager
 	)
-
 	$method = "blob_get"
-	$params = @{blob_hash = $BlobHash}
-	if ($Timeout -ne "") {$params.Add("timeout",$Timeout)}
-	if ($Encoding -ne "") {$params.Add("encoding",$Encoding)}
-	if ($PaymentRateManager -ne "") {$params.Add("payment_rate_manager",$PaymentRateManager)}
-	
+	$params = @{
+		blob_hash = $BlobHash
+	}
+	if ($Timeout -ne "") {
+		$params.Add("timeout", $Timeout)
+	}
+	if ($Encoding -ne "") {
+		$params.Add("encoding", $Encoding)
+	}
+	if ($PaymentRateManager -ne "") {
+		$params.Add("payment_rate_manager", $PaymentRateManager)
+	}
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Get-BlobHash(){
-	[CmdletBinding()]
-	
+function Get-BlobDescriptor() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$SdHash,
+		[Parameter(Mandatory = $false)]
+		[Int]$Timeout,
+		[Parameter(Mandatory = $false)]
+		[String]$PaymentRateManager
+	)
+	$method = "descriptor_get"
+	$params = @{
+		blob_hash = $BlobHash
+	}
+	if ($Timeout -ne "") {
+		$params.Add("timeout", $Timeout)
+	}
+	if ($PaymentRateManager -ne "") {
+		$params.Add("payment_rate_manager", $PaymentRateManager)
+	}
+	Get-JsonContent -Method $method -Params $params
+}
+function Get-BlobHash() {
 	param (
 		[Parameter(Mandatory = $false, ParameterSetName = 'All')]
 		[Switch]$All = $false,
@@ -99,85 +73,223 @@ function Get-BlobHash(){
 		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
 		[Int]$Page
 	)
-	
 	$method = "blob_list"
-
-	if ($All) {Get-JsonContent -method $method ; Return}
+	if ($All) {
+		Get-JsonContent -method $method
+		Return
+	}
 	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Uri") {$params = @{uri = $Uri}}
-	if ($set -eq "StreamHash") {$params = @{stream_hash = $StreamHash}}
-	if ($set -eq "SdHash") {$params = @{sd_hash = $SdHash}}
-	if ($Needed -ne "") {$params.Add("needed",$Needed)}
-	if ($Finished -ne "") {$params.Add("finished",$Finished)}
-	if ($PageSize -ne "") {$params.Add("page_size",$PageSize)}
-	if ($Page -ne "") {$params.Add("page",$Page)}
-	
+	if ($set -eq "Uri") {
+		$params = @{
+			uri = $Uri
+		}
+	}
+	if ($set -eq "StreamHash") {
+		$params = @{
+			stream_hash = $StreamHash
+		}
+	}
+	if ($set -eq "SdHash") {
+		$params = @{
+			sd_hash = $SdHash
+		}
+	}
+	if ($Needed -ne "") {
+		$params.Add("needed", $Needed)
+	}
+	if ($Finished -ne "") {
+		$params.Add("finished", $Finished)
+	}
+	if ($PageSize -ne "") {
+		$params.Add("page_size", $PageSize)
+	}
+	if ($Page -ne "") {
+		$params.Add("page", $Page)
+	}
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Show-Block(){
-	[CmdletBinding()]
-	
+function Get-BlobPeer() {
 	param (
-	[Parameter(Mandatory = $true)]
-	[String]$Blockhash
+		[Parameter(Mandatory = $true)]
+		[String]$BlobHash,
+		[Parameter(Mandatory = $false)]
+		[Int]$Timeout
 	)
-	$params = @{blockhash = $Blockhash}
-	$method = "block_show"
-	
-	Get-JsonContent -Method $method
-	
+	$method = "peer_list"
+	$params = @{
+		blob_hash = $BlobHash
+	}
+	if ($Timeout -ne "") {
+		$params.Add("timeout", $Timeout)
+	}
+	Get-JsonContent -Method $method -Params $params
 }
-
-function Get-ChannelPublished(){
-	[CmdletBinding()]
-
-	$method = "channel_list_mine"
-	
-	Get-JsonContent -Method $method
-	
-}
-
-function Publish-Channel(){
-	[CmdletBinding()]
-	
+function Remove-Blob() {
 	param (
-	[Parameter(Mandatory = $true,Position = 0)]
-	[String]$ChannelName,
-	[Parameter(Mandatory = $true,Position = 1)]
-	[float]$Amount
+		[Parameter(Mandatory = $true)]
+		[String]$BlobHash
+	)
+	$method = "blob_delete"
+	$params = @{
+		blob_hash = $BlobHash
+	}
+	Get-JsonContent -Method $method -Params
+}
+function Get-Block() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$Blockhash
+	)
+	$params = @{
+		blockhash = $Blockhash
+	}
+	$method = "block_show"
+	Get-JsonContent -Method $method
+}
+function Sync-Blob() {
+	param (
+		[Parameter(Mandatory = $true, ParameterSetName = "AnnounceAll")]
+		[Switch]$AnnounceAll = $false,
+		[Parameter(Mandatory = $true, ParameterSetName = "ReflectAll")]
+		[Switch]$ReflectAll = $false
+	)
+	if ($AnnounceAll) {
+		$method = "blob_announce_all"
+	}
+	if ($ReflectAll) {
+		$method = "blob_reflect_all"
+	}
+	Get-JsonContent -Method $method
+}
+function New-BugReport() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$SdHash
+	)
+	$params = @{
+		sd_hash = $SdHash
+	}
+	$method = "report_bug"
+	Get-JsonContent -Method $method -Params $params
+}
+function Get-Channel() {
+	$method = "channel_list_mine"
+	Get-JsonContent -Method $method
+}
+function New-Channel() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$ChannelName,
+		[Parameter(Mandatory = $true)]
+		[float]$Amount
 	)
 	$method = "channel_new"
-	$params = @{channel_name = $ChannelName;
-				amount = $Amount
+	$params = @{
+		channel_name = $ChannelName
+		amount	     = $Amount
 	}
-	
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Unpublish-Channel(){
-	[CmdletBinding()]
-	
+function Remove-Channel() {
 	param (
-	[Parameter(Mandatory = $true,Position = 0)]
-	[String]$ChannelName,
-	[Parameter(Mandatory = $false,Position = 1)]
-	[float]$Amount
+		[Parameter(Mandatory = $true)]
+		[String]$ChannelName,
+		[Parameter(Mandatory = $false)]
+		[float]$Amount
 	)
 	$method = "claim_abandon"
-	$params = @{channel_name = $ChannelName;
-				amount = $Amount
+	$params = @{
+		channel_name = $ChannelName
+		amount	     = $Amount
 	}
-	
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function New-Claim(){
-	[CmdletBinding()]
-	
+function Add-ClaimSupport() {
+	param (
+		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[String]$Name,
+		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[String]$ClaimId,
+		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[float]$Amount
+	)
+	$method = "claim_list"
+	$set = $PSCmdlet.ParameterSetName
+	if ($set -eq "Name") {
+		$params = @{
+			name   = $Name
+			amount = $Amount
+		}
+	}
+	if ($set -eq "ClaimId") {
+		$params = @{
+			claim_id = $ClaimID
+			amount   = $Amount
+		}
+	}
+	Get-JsonContent -Method $method -Params $params
+}
+function Get-Claim() {
+	param (
+		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[String]$Name,
+		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
+		[String]$Nout,
+		[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
+		[String]$Txid,
+		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[String]$ClaimId,
+		[Parameter(Mandatory = $true, ParameterSetName = "Mine")]
+		[Switch]$Mine = $false,
+		[Parameter(Mandatory = $true, ParameterSetName = "Channel")]
+		[String]$Uri,
+		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
+		[Int]$Page,
+		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
+		[Int]$PageSize
+	)
+	$method = "claim_show"
+	$set = $PSCmdlet.ParameterSetName
+	if ($set -eq "Name") {
+		$params = @{
+			name = $Name
+		}
+		if ($Nout -ne "") {
+			$params.Add("nout", $Nout)
+		}
+	}
+	if ($set -eq "Txid") {
+		$params = @{
+			tx_id = $Txid
+		}
+	}
+	if ($set -eq "ClaimId") {
+		$params = @{
+			claim_id = $ClaimId
+		}
+	}
+	if ($set -eq "Mine") {
+		$method = "claim_list_mine"
+		Get-JsonContent -Method $method
+		Return
+	}
+	if ($set -eq "Channel") {
+		$method = "claim_list_by_channel"
+		$params = @{
+			uri = $Uri
+		}
+		if ($PageSize -ne "") {
+			$params.Add("page_size", $PageSize)
+		}
+		if ($Page -ne "") {
+			$params.Add("page", $Page)
+		}
+	}
+	$result = Get-JsonContent -Method $method -Params $params
+	$result.claim
+}
+function New-Claim() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Name,
@@ -212,115 +324,192 @@ function New-Claim(){
 		[Parameter(Mandatory = $false)]
 		[String]$ChannelName
 	)
-
 	$method = "publish"
-	$params = @{bid = $Bid}
-	if ($Metadata -ne "") {$params.Add("metadata",$Metadata)}
-	if ($FilePath -ne "") {$params.Add("file_path",$FilePath)}
-	if ($Fee -ne "") {$params.Add("fee",$Fee)}
-	if ($Title -ne "") {$params.Add("title",$Title)}
-	if ($Description -ne "") {$params.Add("description",$Description)}
-	if ($Author -ne "") {$params.Add("author",$Author)}
-	if ($Language -ne "") {$params.Add("language",$Language)}
-	if ($License -ne "") {$params.Add("license",$License)}
-	if ($LicenseUrl -ne "") {$params.Add("license_url",$LicenseUrl)}
-	if ($Thumbnail -ne "") {$params.Add("thumbnail",$Thumbnail)}
-	if ($Preview -ne "") {$params.Add("preview",$Preview)}
-	if ($Nsfw -ne "") {$params.Add("nsfw",$Nsfw)}
-	if ($Sources -ne "") {$params.Add("sources",$Sources)}
-	if ($ChannelName -ne "") {$params.Add("channel_name",$ChannelName)}
-	
-	Get-JsonContent -Method $method -Params $params
-	
-}
-
-function Add-ClaimSupport(){
-	[CmdletBinding()]
-	
-	param (
-	[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-	[String]$Name,
-	[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-	[String]$ClaimId,
-	[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-	[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-	[float]$Amount
-	)
-	$method = "claim_list"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {$params = @{name = $Name}}
-	if ($set -eq "ClaimId") {$params = @{claim_id = $ClaimId}}
-	$params.Add("amount",$Amount)
-
-	Get-JsonContent -Method $method -Params $params
-	
-}
-
-function Get-Claim(){
-	[CmdletBinding()]
-	
-	param (
-	[Parameter(Mandatory = $true, ParameterSetName = "Mine")]
-	[Switch]$Mine = $false,
-	[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-	[String]$Name,
-	[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
-	[String]$Txid,
-	[Parameter(Mandatory = $true, ParameterSetName = "Nout")]
-	[String]$Nout,
-	[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-	[String]$ClaimId	
-	)
-	
-	$method = "claim_show"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Mine") {
-		$method = "claim_list_mine"
-		Get-JsonContent -Method $method
-		Return
+	$params = @{
+		bid = $Bid
 	}
-	if ($set -eq "Name") {$params = @{name = $Name}}
-	if ($set -eq "Txid") {$params = @{tx_id = $Txid}}
-	if ($set -eq "Nout") {$params = @{nout = $Nout}}
-	if ($set -eq "ClaimId") {$params = @{claim_id = $ClaimId}}
-	
-	$result = Get-JsonContent -Method $method -Params $params
-	$result.claim
-}
-
-function Stop-Daemon(){
-	[CmdletBinding()]
-
-	$method = "lbrynet-daemon"
-	
-	Get-JsonContent -Method $method
-	
-}
-
-function Get-Descriptor(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $true)]
-		[String]$SdHash,
-		[Parameter(Mandatory = $false)]
-		[Int]$Timeout,
-		[Parameter(Mandatory = $false)]
-		[String]$PaymentRateManager
-	)
-
-	$method = "descriptor_get"
-	$params = @{blob_hash = $BlobHash}
-	if ($Timeout -ne "") {$params.Add("timeout",$Timeout)}
-	if ($PaymentRateManager -ne "") {$params.Add("payment_rate_manager",$PaymentRateManager)}
-
+	if ($Metadata -ne "") {
+		$params.Add("metadata", $Metadata)
+	}
+	if ($FilePath -ne "") {
+		$params.Add("file_path", $FilePath)
+	}
+	if ($Fee -ne "") {
+		$params.Add("fee", $Fee)
+	}
+	if ($Title -ne "") {
+		$params.Add("title", $Title)
+	}
+	if ($Description -ne "") {
+		$params.Add("description", $Description)
+	}
+	if ($Author -ne "") {
+		$params.Add("author", $Author)
+	}
+	if ($Language -ne "") {
+		$params.Add("language", $Language)
+	}
+	if ($License -ne "") {
+		$params.Add("license", $License)
+	}
+	if ($LicenseUrl -ne "") {
+		$params.Add("license_url", $LicenseUrl)
+	}
+	if ($Thumbnail -ne "") {
+		$params.Add("thumbnail", $Thumbnail)
+	}
+	if ($Preview -ne "") {
+		$params.Add("preview", $Preview)
+	}
+	if ($Nsfw -ne "") {
+		$params.Add("nsfw", $Nsfw)
+	}
+	if ($Sources -ne "") {
+		$params.Add("sources", $Sources)
+	}
+	if ($ChannelName -ne "") {
+		$params.Add("channel_name", $ChannelName)
+	}
 	Get-JsonContent -Method $method -Params $params
-
 }
-
-function Remove-File(){
-	[CmdletBinding()]
-	
+function Get-Daemon() {
+	$method = "settings_get"
+	Get-JsonContent -Method $method
+}
+function Get-DaemonStatus() {
+	param (
+		[Parameter(Mandatory = $false)]
+		[Boolean]$SessionStatus = $false
+	)
+	$method = "status"
+	$params = @{
+		session_status = $SessionStatus
+	}
+	Get-JsonContent -Method $method -Params $params
+}
+function Set-Daemon() {
+	param (
+		[Parameter(Mandatory = $false)]
+		[Boolean]$RunOnStartup,
+		[Parameter(Mandatory = $false)]
+		[Float]$DataRate,
+		[Parameter(Mandatory = $false)]
+		[Float]$MaxKeyFee,
+		[Parameter(Mandatory = $false)]
+		[String]$DownloadDirectory,
+		[Parameter(Mandatory = $false)]
+		[Float]$MaxUpload,
+		[Parameter(Mandatory = $false)]
+		[Float]$MaxDownload,
+		[Parameter(Mandatory = $false)]
+		[Int]$DownloadTimeout,
+		[Parameter(Mandatory = $false)]
+		[Float]$SearchTimeout,
+		[Parameter(Mandatory = $false)]
+		[Int]$CacheTime
+	)
+	$method = "settings_set"
+	if ($RunOnStartup -ne "") {
+		$params.Add("run_on_startup", $RunOnStartup)
+	}
+	if ($DataRate -ne "") {
+		$params.Add("data_rate", $DataRate)
+	}
+	if ($MaxKeyFee -ne "") {
+		$params.Add("max_key_fee", $MaxKeyFee)
+	}
+	if ($DownloadDirectory -ne "") {
+		$params.Add("download_directory", $DownloadDirectory)
+	}
+	if ($MaxUpload -ne "") {
+		$params.Add("max_upload", $MaxUpload)
+	}
+	if ($MaxDownload -ne "") {
+		$params.Add("max_download", $MaxDownload)
+	}
+	if ($DownloadTimeout -ne "") {
+		$params.Add("download_timeout", $DownloadTimeout)
+	}
+	if ($SearchTimeout -ne "") {
+		$params.Add("search_timeout", $SearchTimeout)
+	}
+	if ($CacheTime -ne "") {
+		$params.Add("cache_time", $CacheTime)
+	}
+	Get-JsonContent -Method $method
+}
+function Stop-Daemon() {
+	$method = "lbrynet-daemon"
+	Get-JsonContent -Method $method
+}
+function Get-File() {
+	param (
+		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[String]$Name,
+		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
+		[String]$SdHash,
+		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
+		[String]$FileName,
+		[Parameter(Mandatory = $true, ParameterSetName = "StreamHash")]
+		[String]$StreamHash,
+		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[String]$ClaimId,
+		[Parameter(Mandatory = $true, ParameterSetName = "Outpoint")]
+		[String]$OutPoint,
+		[Parameter(Mandatory = $true, ParameterSetName = "RowId")]
+		[Int]$RowId,
+		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
+		[Parameter(Mandatory = $false, ParameterSetName = "SdHash")]
+		[Parameter(Mandatory = $false, ParameterSetName = "FileName")]
+		[Parameter(Mandatory = $false, ParameterSetName = "StreamHash")]
+		[Parameter(Mandatory = $false, ParameterSetName = "ClaimId")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Outpoint")]
+		[Parameter(Mandatory = $false, ParameterSetName = "RowId")]
+		[Boolean]$FullStatus
+	)
+	$method = "file_list"
+	$set = $PSCmdlet.ParameterSetName
+	if ($set -eq "Name") {
+		$params = @{
+			name = $Name
+		}
+	}
+	if ($set -eq "SdHash") {
+		$params = @{
+			sd_hash = $SdHash
+		}
+	}
+	if ($set -eq "FileName") {
+		$params = @{
+			file_name = $FileName
+		}
+	}
+	if ($set -eq "StreamHash") {
+		$params = @{
+			stream_hash = $StreamHash
+		}
+	}
+	if ($set -eq "ClaimId") {
+		$params = @{
+			claim_id = $ClaimId
+		}
+	}
+	if ($set -eq "Outpoint") {
+		$params = @{
+			outpoint = $Outpoint
+		}
+	}
+	if ($set -eq "RowId") {
+		$params = @{
+			rowid = $RowId
+		}
+	}
+	if ($FullStatus -ne "") {
+		$params.Add("full_status", $FullStatus)
+	}
+	Get-JsonContent -Method $method -Params $params
+}
+function Remove-File() {
 	param (
 		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
@@ -347,22 +536,47 @@ function Remove-File(){
 	)
 	$method = "file_delete"
 	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {$params = @{name = $Name}}
-	if ($set -eq "SdHash") {$params = @{sd_hash = $SdHash}}
-	if ($set -eq "FileName") {$params = @{file_name = $FileName}}
-	if ($set -eq "StreamHash") {$params = @{stream_hash = $StreamHash}}
-	if ($set -eq "ClaimId") {$params = @{claim_id = $ClaimId}}
-	if ($set -eq "Outpoint") {$params = @{outpoint = $Outpoint}}
-	if ($set -eq "RowId") {$params = @{rowid = $RowId}}
-	if ($DeleteTargetFile -ne "") {$params.Add("delete_target_file",$DeleteTargetFile)}
-
+	if ($set -eq "Name") {
+		$params = @{
+			name = $Name
+		}
+	}
+	if ($set -eq "SdHash") {
+		$params = @{
+			sd_hash = $SdHash
+		}
+	}
+	if ($set -eq "FileName") {
+		$params = @{
+			file_name = $FileName
+		}
+	}
+	if ($set -eq "StreamHash") {
+		$params = @{
+			stream_hash = $StreamHash
+		}
+	}
+	if ($set -eq "ClaimId") {
+		$params = @{
+			claim_id = $ClaimId
+		}
+	}
+	if ($set -eq "Outpoint") {
+		$params = @{
+			outpoint = $Outpoint
+		}
+	}
+	if ($set -eq "RowId") {
+		$params = @{
+			rowid = $RowId
+		}
+	}
+	if ($DeleteTargetFile -ne "") {
+		$params.Add("delete_target_file", $DeleteTargetFile)
+	}
 	Get-JsonContent -Method $method -Params $params
-
 }
-
-function Get-File(){
-	[CmdletBinding()]
-	
+function Set-FileStatus() {
 	param (
 		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
@@ -370,66 +584,50 @@ function Get-File(){
 		[String]$SdHash,
 		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
 		[String]$FileName,
-		[Parameter(Mandatory = $true, ParameterSetName = "StreamHash")]
-		[String]$StreamHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-		[String]$ClaimId,
-		[Parameter(Mandatory = $true, ParameterSetName = "Outpoint")]
-		[String]$OutPoint,
-		[Parameter(Mandatory = $true, ParameterSetName = "RowId")]
-		[Int]$RowId,
-		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $false, ParameterSetName = "SdHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "FileName")]
-		[Parameter(Mandatory = $false, ParameterSetName = "StreamHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "ClaimId")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Outpoint")]
-		[Parameter(Mandatory = $false, ParameterSetName = "RowId")]
-		[Boolean]$full_status
-	)
-	$method = "file_list"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {$params = @{name = $Name}}
-	if ($set -eq "SdHash") {$params = @{sd_hash = $SdHash}}
-	if ($set -eq "FileName") {$params = @{file_name = $FileName}}
-	if ($set -eq "StreamHash") {$params = @{stream_hash = $StreamHash}}
-	if ($set -eq "ClaimId") {$params = @{claim_id = $ClaimId}}
-	if ($set -eq "Outpoint") {$params = @{outpoint = $Outpoint}}
-	if ($set -eq "RowId") {$params = @{rowid = $RowId}}
-	if ($FullStatus -ne "") {$params.Add("full_status",$FullStatus)}
-
-	Get-JsonContent -Method $method -Params $params
-
-}
-
-function Set-FileStatus(){
-	[CmdletBinding()]
-	
-	param (
-	[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-	[String]$Name,
-	[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-	[String]$SdHash,
-	[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-	[String]$FileName,
-	[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-	[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-	[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-	[Parameter(Mandatory = $true, ParameterSetName = "Status")]
-	[String]$Status
+		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
+		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Status")]
+		[String]$Status
 	)
 	$method = "file_set_status"
 	$set = $PSCmdlet.ParameterSetName
-	$params = @{status = $Status}
-	if ($set -eq "Name") {$params.Add("name",$Name)}
-	if ($set -eq "SdHash") {$params.Add("sd_hash",$SdHash)}
-	if ($set -eq "FileName") {$params.Add("file_name",$FileName)}
-	
+	$params = @{
+		status = $Status
+	}
+	if ($set -eq "Name") {
+		$params.Add("name", $Name)
+	}
+	if ($set -eq "SdHash") {
+		$params.Add("sd_hash", $SdHash)
+	}
+	if ($set -eq "FileName") {
+		$params.Add("file_name", $FileName)
+	}
 	$result = Get-JsonContent -Method $method -Params $params
 }
-
-function Get-Stream(){
-	[CmdletBinding()]
+function Get-JsonContent() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$Method,
+		[Parameter(Mandatory = $false)]
+		[Hashtable]$Params
+	)
+	$uri = "http://localhost:5279/lbryapi"
+	if (($Params -eq "") -or ($Params -eq $null)) {
+		$data = ConvertTo-Json @{
+			method = $method
+		}
+	} else {
+		$data = ConvertTo-Json @{
+			method = $method; params = $params
+		}
+	}
+	$output = Invoke-WebRequest -Uri $uri -Method Post -Body $data
+	$content = ConvertFrom-Json $output.Content
+	$content.result
+}
+function Get-Stream() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Uri,
@@ -440,20 +638,22 @@ function Get-Stream(){
 		[Parameter(Mandatory = $false)]
 		[String]$DownloadDirectory
 	)
-
 	$method = "get"
-	$params = @{uri = $Uri}
-	if ($FileName -ne "") {$params.Add("file_name",$FileName)}
-	if ($Timeout -ne "") {$params.Add("timeout",$Timeout)}
-	if ($DownloadDirectory -ne "") {$params.Add("download_directory",$DownloadDirectory)}
-	
+	$params = @{
+		uri = $Uri
+	}
+	if ($FileName -ne "") {
+		$params.Add("file_name", $FileName)
+	}
+	if ($Timeout -ne "") {
+		$params.Add("timeout", $Timeout)
+	}
+	if ($DownloadDirectory -ne "") {
+		$params.Add("download_directory", $DownloadDirectory)
+	}
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Get-StreamAvailability(){
-	[CmdletBinding()]
-	
+function Get-StreamAvailability() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Uri,
@@ -462,90 +662,99 @@ function Get-StreamAvailability(){
 		[Parameter(Mandatory = $false)]
 		[Int]$PeerTimeout
 	)
-
 	$method = "get_availability"
-	$params = @{uri = $Uri}
-	if ($SdTimeout -ne "") {$params.Add("sd_timeout",$SdTimeout)}
-	if ($PeerTimeout -ne "") {$params.Add("peer_timeout",$PeerTimeout)}
-	
+	$params = @{
+		uri = $Uri
+	}
+	if ($SdTimeout -ne "") {
+		$params.Add("sd_timeout", $SdTimeout)
+	}
+	if ($PeerTimeout -ne "") {
+		$params.Add("peer_timeout", $PeerTimeout)
+	}
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Get-BlobPeer(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $true)]
-		[String]$BlobHash,
-
-		[Parameter(Mandatory = $false)]
-		[Int]$Timeout
-	)
-
-	$method = "peer_list"
-	$params = @{blob_hash = $BlobHash}
-	if ($Timeout -ne "") {$params.Add("timeout",$Timeout)}
-	
-	Get-JsonContent -Method $method -Params $params
-	
-}
-
-function Sync-Stream(){
-	[CmdletBinding()]
-
+function Sync-Stream() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$SdHash
 	)
-	$params = @{sd_hash = $SdHash}
+	$params = @{
+		sd_hash = $SdHash
+	}
 	$method = "reflect"
-	
 	Get-JsonContent -Method $method -Params $params
 }
-
-function New-BugReport(){
-	[CmdletBinding()]
-
+function Get-StreamCostEstimate() {
 	param (
 		[Parameter(Mandatory = $true)]
-		[String]$SdHash
+		[String]$Name,
+		[Parameter(Mandatory = $false)]
+		[Int]$Size
 	)
-	$params = @{sd_hash = $SdHash}
-	$method = "report_bug"
-	
+	$method = "stream_cost_estimate"
+	$params = @{
+		name = $Name
+	}
+	if ($Size -ne "") {
+		$params.Add("size", $Size)
+	}
 	Get-JsonContent -Method $method -Params $params
 }
-
-function Resolve-Uri(){
-	[CmdletBinding()]
-
-	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Uri
-	)
-	$params = @{uri = $Uri}
-	$method = "resolve"
-	
-	Get-JsonContent -Method $method -Params $params
-}
-
-function Resolve-Name(){
-	[CmdletBinding()]
-
+function Resolve-Stream() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Name
 	)
-	$params = @{name = $Name}
+	$params = @{
+		name = $Name
+	}
 	$method = "resolve_name"
-	
 	Get-JsonContent -Method $method -Params $params
 }
-
-function Send-AmountToAddress(){
-	[CmdletBinding()]
-
+function Get-Transaction() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$Txid
+	)
+	$params = @{
+		txid = $Txid
+	}
+	$method = "transaction_show"
+	Get-JsonContent -Method $method
+}
+function Resolve-Uri() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$Uri
+	)
+	$params = @{
+		uri = $Uri
+	}
+	$method = "resolve"
+	Get-JsonContent -Method $method -Params $params
+}
+function Get-Version() {
+	$method = "version"
+	Get-JsonContent -Method $method
+}
+function Get-WalletAddressList() {
+	$method = "wallet_list"
+	Get-JsonContent -Method $method
+}
+function Get-WalletAddressUnused() {
+	$method = "wallet_unused_address"
+	Get-JsonContent -Method $method
+}
+function New-WalletAddress() {
+	$method = "wallet_new_address"
+	Get-JsonContent -Method $method
+}
+function Get-WalletBalance() {
+	$method = "wallet_balance"
+	Get-JsonContent -Method $method
+}
+function Send-WalletCredits() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[Float]$Amount,
@@ -553,188 +762,35 @@ function Send-AmountToAddress(){
 		[String]$Address
 	)
 	$method = "send_amount_to_address"
-	$params = @{ammount = $Amount}
-	$params.Add("address",$Address)
-	
-	Get-JsonContent -Method $method -Params $params
-}
-
-function Get-Daemon(){
-	[CmdletBinding()]
-
-	$method = "settings_get"
-	
-	Get-JsonContent -Method $method
-}
-
-function Set-Daemon(){
-	[CmdletBinding()]
-
-	param (
-		[Parameter(Mandatory = $false)]
-		[Boolean]$RunOnStartup,
-		[Parameter(Mandatory = $false)]
-		[Float]$DataRate,
-		[Parameter(Mandatory = $false)]
-		[Float]$MaxKeyFee,
-		[Parameter(Mandatory = $false)]
-		[String]$DownloadDirectory,
-		[Parameter(Mandatory = $false)]
-		[Float]$MaxUpload,
-		[Parameter(Mandatory = $false)]
-		[Float]$MaxDownload,
-		[Parameter(Mandatory = $false)]
-		[Int]$DownloadTimeout,
-		[Parameter(Mandatory = $false)]
-		[Float]$SearchTimeout,
-		[Parameter(Mandatory = $false)]
-		[Int]$CacheTime
-	)
-
-	$method = "settings_set"
-	if ($RunOnStartup -ne "") {$params.Add("run_on_startup",$RunOnStartup)}
-	if ($DataRate -ne "") {$params.Add("data_rate",$DataRate)}
-	if ($MaxKeyFee -ne "") {$params.Add("max_key_fee",$MaxKeyFee)}
-	if ($DownloadDirectory -ne "") {$params.Add("download_directory",$DownloadDirectory)}
-	if ($MaxUpload -ne "") {$params.Add("max_upload",$MaxUpload)}
-	if ($MaxDownload -ne "") {$params.Add("max_download",$MaxDownload)}
-	if ($DownloadTimeout -ne "") {$params.Add("download_timeout",$DownloadTimeout)}
-	if ($SearchTimeout -ne "") {$params.Add("search_timeout",$SearchTimeout)}
-	if ($CacheTime -ne "") {$params.Add("cache_time",$CacheTime)}
-		
-	Get-JsonContent -Method $method
-}
-
-function Get-DaemonStatus(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $false)]
-		[Boolean]$SessionStatus = $false
-	)
-
-	$method = "status"
-	$params = @{session_status = $SessionStatus}
-	
-	Get-JsonContent -Method $method -Params $params
-	
-}
-
-function Get-StreamCostEstimate(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Name,
-		[Parameter(Mandatory = $false)]
-		[Int]$Size
-	)
-
-	$method = "stream_cost_estimate"
-	$params = @{name = $Name}
-	if ($Size -ne "") {$params.Add("size",$Size)}
-	
-	Get-JsonContent -Method $method -Params $params
-	
-}
-
-function Get-TransactionList(){
-	[CmdletBinding()]
-	
-	$method = "transaction_list"
-	
-	Get-JsonContent -Method $method
-	
-}
-
-function Show-Transaction(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $false)]
-		[String]$Txid
-	)
-
-	if ($Txid -eq "") {
-	
-		$method = "transaction_list"
-		
-		Get-JsonContent -Method $method
-	} else {
-	
-		$method = "transaction_show"
-		$params = @{txid = $Txid}
-		
-		Get-JsonContent -Method $method -Params $params
+	$params = @{
+		ammount = $Amount
 	}
-}
-
-function Get-Version(){
-	[CmdletBinding()]
-
-	$method = "version"
-	
-	Get-JsonContent -Method $method
-}
-
-function Get-WalletBalance(){
-	[CmdletBinding()]
-
-	$method = "wallet_balance"
-	
-	Get-JsonContent -Method $method
-}
-
-function Test-WalletAddressOwnership(){
-	[CmdletBinding()]
-	
-	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Address
-	)
-
-	$method = "wallet_is_address_mine"
-	$params = @{address = $Address}
-	
+	$params.Add("address", $Address)
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Get-WalletAddress(){
-	[CmdletBinding()]
-
-	$method = "wallet_list"
-	
-	Get-JsonContent -Method $method
-}
-
-function New-WalletAddress(){
-	[CmdletBinding()]
-
-	$method = "wallet_new_address"
-	
-	Get-JsonContent -Method $method
-}
-
-function Get-WalletPublicKey(){
-	[CmdletBinding()]
-	
+function Get-WalletPublicKey() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Address
 	)
-
 	$method = "wallet_public_key"
-	$params = @{address = $Address}
-	
+	$params = @{
+		address = $Address
+	}
 	Get-JsonContent -Method $method -Params $params
-	
 }
-
-function Get-WalletAddressUnused(){
-	[CmdletBinding()]
-
-	$method = "wallet_unused_address"
-	
+function Get-WalletTransactionList() {
+	$method = "transaction_list"
 	Get-JsonContent -Method $method
+}
+function Test-WalletAddressOwnership() {
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]$Address
+	)
+	$method = "wallet_is_address_mine"
+	$params = @{
+		address = $Address
+	}
+	Get-JsonContent -Method $method -Params $params
 }
