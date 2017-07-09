@@ -1,4 +1,4 @@
-# Lbry PowerShell module v0.1
+# Lbry PowerShell API module v0.1
 
 1. Copy folder with files into "$EnvProgramFiles\WindowsPowerShell\Modules\" directory
 2. Import module: Import-Module LbryPSAPI
