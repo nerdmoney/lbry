@@ -1,6 +1,6 @@
-﻿function Get-Blob() {
+﻿function Get-LbryBlob() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$BlobHash,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
@@ -23,11 +23,11 @@
 	if ($PaymentRateManager -ne "") {
 		$params.Add("payment_rate_manager", $PaymentRateManager)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-BlobDescriptor() {
+function Get-LbryBlobDescriptor() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$SdHash,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
@@ -44,11 +44,11 @@ function Get-BlobDescriptor() {
 	if ($PaymentRateManager -ne "") {
 		$params.Add("payment_rate_manager", $PaymentRateManager)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-BlobHash() {
+function Get-LbryBlobHash() {
 	param (
-		[Parameter(Mandatory = $false, ParameterSetName = 'All')]
+		[Parameter(Position = 0, Mandatory = $false, ParameterSetName = 'All')]
 		[Switch]$All = $false,
 		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
 		[String]$Uri,
@@ -75,7 +75,7 @@ function Get-BlobHash() {
 	)
 	$method = "blob_list"
 	if ($All) {
-		Get-JsonContent -method $method
+		Get-LbryJsonContent -method $method
 		Return
 	}
 	$set = $PSCmdlet.ParameterSetName
@@ -106,11 +106,11 @@ function Get-BlobHash() {
 	if ($Page -ne "") {
 		$params.Add("page", $Page)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-BlobPeer() {
+function Get-LbryBlobPeer() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$BlobHash,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout
@@ -122,31 +122,42 @@ function Get-BlobPeer() {
 	if ($Timeout -ne "") {
 		$params.Add("timeout", $Timeout)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Remove-Blob() {
+function Remove-LbryBlob() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$BlobHash
 	)
 	$method = "blob_delete"
 	$params = @{
 		blob_hash = $BlobHash
 	}
-	Get-JsonContent -Method $method -Params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Block() {
+function Get-LbryBlock() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Blockhash
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = 'Blockhash')]
+		[String]$Blockhash,
+		[Parameter(Mandatory = $true, ParameterSetName = 'Height')]
+		[String]$Height
 	)
-	$params = @{
-		blockhash = $Blockhash
+	
+	$set = $PSCmdlet.ParameterSetName
+	if ($set -eq "Blockhash") {
+		$params = @{
+			blockhash = $blockhash
+		}
+	} else {
+		$params = @{
+			height = $Height
+		}
 	}
+	
 	$method = "block_show"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Sync-Blob() {
+function Sync-LbryBlob() {
 	param (
 		[Parameter(Mandatory = $true, ParameterSetName = "AnnounceAll")]
 		[Switch]$AnnounceAll = $false,
@@ -159,28 +170,28 @@ function Sync-Blob() {
 	if ($ReflectAll) {
 		$method = "blob_reflect_all"
 	}
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function New-BugReport() {
+function New-LbryBugReport() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[String]$SdHash
+		[Parameter(Position = 0, Mandatory = $true)]
+		[String]$Message
 	)
 	$params = @{
-		sd_hash = $SdHash
+		message = $Message
 	}
 	$method = "report_bug"
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Channel() {
+function Get-LbryChannel() {
 	$method = "channel_list_mine"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function New-Channel() {
+function New-LbryChannel() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$ChannelName,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 1, Mandatory = $true)]
 		[float]$Amount
 	)
 	$method = "channel_new"
@@ -188,51 +199,29 @@ function New-Channel() {
 		channel_name = $ChannelName
 		amount	     = $Amount
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Remove-Channel() {
+function Add-LbryClaimSupport() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[String]$ChannelName,
-		[Parameter(Mandatory = $false)]
-		[float]$Amount
-	)
-	$method = "claim_abandon"
-	$params = @{
-		channel_name = $ChannelName
-		amount	     = $Amount
-	}
-	Get-JsonContent -Method $method -Params $params
-}
-function Add-ClaimSupport() {
-	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[Parameter(Position = 1, Mandatory = $true)]
 		[String]$ClaimId,
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
+		[Parameter(Position = 2, Mandatory = $true)]
 		[float]$Amount
 	)
-	$method = "claim_list"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {
-		$params = @{
-			name   = $Name
-			amount = $Amount
-		}
+	$method = "claim_new_support"
+	$params = @{
+		name   = $Name
+		claim_id = $ClaimID
+		amount   = $Amount
 	}
-	if ($set -eq "ClaimId") {
-		$params = @{
-			claim_id = $ClaimID
-			amount   = $Amount
-		}
-	}
-	Get-JsonContent -Method $method -Params $params
+
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Claim() {
+function Get-LbryClaim() {
 	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
 		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
 		[String]$Nout,
@@ -271,7 +260,7 @@ function Get-Claim() {
 	}
 	if ($set -eq "Mine") {
 		$method = "claim_list_mine"
-		Get-JsonContent -Method $method
+		Get-LbryJsonContent -Method $method
 		Return
 	}
 	if ($set -eq "Channel") {
@@ -286,39 +275,45 @@ function Get-Claim() {
 			$params.Add("page", $Page)
 		}
 	}
-	$result = Get-JsonContent -Method $method -Params $params
-	$result.claim
+	$result = Get-LbryJsonContent -Method $method -Params $params
+	
+	if ($set -eq "Channel") {
+		$result.$Uri.claims_in_channel
+	} else {
+		$result.claim
+		}
+	
 }
-function New-Claim() {
+function New-LbryClaim() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Name,
-		[Parameter(Mandatory = $false)]
-		[float]$Bid,
+		[Parameter(Mandatory = $true)]
+		[float]$Bid = "1",
 		[Parameter(Mandatory = $false)]
 		[HashTable[]]$Metadata,
 		[Parameter(Mandatory = $false)]
 		[String]$FilePath,
 		[Parameter(Mandatory = $false)]
 		[HashTable]$fee,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
 		[String]$Title,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
 		[String]$Description,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
 		[String]$Author,
-		[Parameter(Mandatory = $false)]
-		[String]$Language,
-		[Parameter(Mandatory = $false)]
-		[String]$License,
+		[Parameter(Mandatory = $true)]
+		[String]$Language = "en",
+		[Parameter(Mandatory = $true)]
+		[String]$License = "Public Domain",
 		[Parameter(Mandatory = $false)]
 		[String]$LicenseUrl,
 		[Parameter(Mandatory = $false)]
 		[String]$Thumbnail,
 		[Parameter(Mandatory = $false)]
 		[String]$Preview,
-		[Parameter(Mandatory = $false)]
-		[Boolean]$Nsfw,
+		[Parameter(Mandatory = $true)]
+		[Boolean]$Nsfw = $true,
 		[Parameter(Mandatory = $false)]
 		[HashTable]$Sources,
 		[Parameter(Mandatory = $false)]
@@ -326,7 +321,14 @@ function New-Claim() {
 	)
 	$method = "publish"
 	$params = @{
-		bid = $Bid
+		name	    = $Name
+		bid		    = $Bid
+		title	    = $Title
+		description = $Description
+		author	    = $Author
+		language    = $Language
+		license	    = $License
+		nsfw	    = $Nsfw
 	}
 	if ($Metadata -ne "") {
 		$params.Add("metadata", $Metadata)
@@ -337,21 +339,6 @@ function New-Claim() {
 	if ($Fee -ne "") {
 		$params.Add("fee", $Fee)
 	}
-	if ($Title -ne "") {
-		$params.Add("title", $Title)
-	}
-	if ($Description -ne "") {
-		$params.Add("description", $Description)
-	}
-	if ($Author -ne "") {
-		$params.Add("author", $Author)
-	}
-	if ($Language -ne "") {
-		$params.Add("language", $Language)
-	}
-	if ($License -ne "") {
-		$params.Add("license", $License)
-	}
 	if ($LicenseUrl -ne "") {
 		$params.Add("license_url", $LicenseUrl)
 	}
@@ -361,33 +348,41 @@ function New-Claim() {
 	if ($Preview -ne "") {
 		$params.Add("preview", $Preview)
 	}
-	if ($Nsfw -ne "") {
-		$params.Add("nsfw", $Nsfw)
-	}
 	if ($Sources -ne "") {
 		$params.Add("sources", $Sources)
 	}
 	if ($ChannelName -ne "") {
 		$params.Add("channel_name", $ChannelName)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Daemon() {
-	$method = "settings_get"
-	Get-JsonContent -Method $method
-}
-function Get-DaemonStatus() {
+function Remove-LbryClaim() {
 	param (
-		[Parameter(Mandatory = $false)]
+		[Parameter(Position = 0, Mandatory = $true)]
+		[String]$ClaimId
+	)
+	$method = "claim_abandon"
+	$params = @{
+		claim_id = $ClaimId
+	}
+	Get-LbryJsonContent -Method $method -Params $params
+}
+function Get-LbryDaemon() {
+	$method = "settings_get"
+	Get-LbryJsonContent -Method $method
+}
+function Get-LbryDaemonStatus() {
+	param (
+		[Parameter(Position = 0, Mandatory = $false)]
 		[Boolean]$SessionStatus = $false
 	)
 	$method = "status"
 	$params = @{
 		session_status = $SessionStatus
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Set-Daemon() {
+function Set-LbryDaemon() {
 	param (
 		[Parameter(Mandatory = $false)]
 		[Boolean]$RunOnStartup,
@@ -409,6 +404,7 @@ function Set-Daemon() {
 		[Int]$CacheTime
 	)
 	$method = "settings_set"
+	$params = @{}
 	if ($RunOnStartup -ne "") {
 		$params.Add("run_on_startup", $RunOnStartup)
 	}
@@ -436,15 +432,15 @@ function Set-Daemon() {
 	if ($CacheTime -ne "") {
 		$params.Add("cache_time", $CacheTime)
 	}
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Stop-Daemon() {
-	$method = "lbrynet-daemon"
-	Get-JsonContent -Method $method
+function Stop-LbryDaemon() {
+	$method = "daemon_stop"
+	Get-LbryJsonContent -Method $method
 }
-function Get-File() {
+function Get-LbryFile() {
 	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
 		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
 		[String]$SdHash,
@@ -507,11 +503,11 @@ function Get-File() {
 	if ($FullStatus -ne "") {
 		$params.Add("full_status", $FullStatus)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Remove-File() {
+function Remove-LbryFile() {
 	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
 		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
 		[String]$SdHash,
@@ -574,26 +570,21 @@ function Remove-File() {
 	if ($DeleteTargetFile -ne "") {
 		$params.Add("delete_target_file", $DeleteTargetFile)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Set-FileStatus() {
+function Start-LbryFileDownload() {
 	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
 		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
 		[String]$SdHash,
 		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[String]$FileName,
-		[Parameter(Mandatory = $true, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[Parameter(Mandatory = $true, ParameterSetName = "Status")]
-		[String]$Status
+		[String]$FileName
 	)
 	$method = "file_set_status"
 	$set = $PSCmdlet.ParameterSetName
 	$params = @{
-		status = $Status
+		status = "start"
 	}
 	if ($set -eq "Name") {
 		$params.Add("name", $Name)
@@ -604,9 +595,34 @@ function Set-FileStatus() {
 	if ($set -eq "FileName") {
 		$params.Add("file_name", $FileName)
 	}
-	$result = Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-JsonContent() {
+function Stop-LbryFileDownload() {
+	param (
+		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
+		[String]$Name,
+		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
+		[String]$SdHash,
+		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
+		[String]$FileName
+	)
+	$method = "file_set_status"
+	$set = $PSCmdlet.ParameterSetName
+	$params = @{
+		status = "stop"
+	}
+	if ($set -eq "Name") {
+		$params.Add("name", $Name)
+	}
+	if ($set -eq "SdHash") {
+		$params.Add("sd_hash", $SdHash)
+	}
+	if ($set -eq "FileName") {
+		$params.Add("file_name", $FileName)
+	}
+	Get-LbryJsonContent -Method $method -Params $params
+}
+function Get-LbryJsonContent() {
 	param (
 		[Parameter(Mandatory = $true)]
 		[String]$Method,
@@ -623,13 +639,14 @@ function Get-JsonContent() {
 			method = $method; params = $params
 		}
 	}
+	#Write-Host $data
 	$output = Invoke-WebRequest -Uri $uri -Method Post -Body $data
 	$content = ConvertFrom-Json $output.Content
 	$content.result
 }
-function Get-Stream() {
+function Get-LbryStream() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Uri,
 		[Parameter(Mandatory = $false)]
 		[String]$FileName,
@@ -651,11 +668,11 @@ function Get-Stream() {
 	if ($DownloadDirectory -ne "") {
 		$params.Add("download_directory", $DownloadDirectory)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-StreamAvailability() {
+function Get-LbryStreamAvailability() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Uri,
 		[Parameter(Mandatory = $false)]
 		[Int]$SdTimeout,
@@ -672,125 +689,133 @@ function Get-StreamAvailability() {
 	if ($PeerTimeout -ne "") {
 		$params.Add("peer_timeout", $PeerTimeout)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Sync-Stream() {
+function Sync-LbryStream() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$SdHash
 	)
 	$params = @{
 		sd_hash = $SdHash
 	}
 	$method = "reflect"
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-StreamCostEstimate() {
+function Get-LbryStreamCostEstimate() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Name,
+		[Parameter(Position = 0, Mandatory = $true)]
+		[String]$Uri,
 		[Parameter(Mandatory = $false)]
 		[Int]$Size
 	)
 	$method = "stream_cost_estimate"
 	$params = @{
-		name = $Name
+		uri = $Uri
 	}
 	if ($Size -ne "") {
 		$params.Add("size", $Size)
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Resolve-Stream() {
+function Resolve-LbryStream() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Name
 	)
 	$params = @{
 		name = $Name
 	}
 	$method = "resolve_name"
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Transaction() {
+function Get-LbryTransaction() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[String]$Txid
+		[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
+		[String]$Txid,
+		[Parameter(Mandatory = $true, ParameterSetName = "Wallet")]
+		[Switch]$Wallet
 	)
-	$params = @{
-		txid = $Txid
+	if ($Wallet) {
+		$method = "transaction_list"
+		Get-LbryJsonContent -Method $method
+		Return
+	} else {
+		$method = "transaction_show"
+		$params = @{
+			txid = $Txid
+		}	
+	Get-LbryJsonContent -Method $method -Params $params
 	}
-	$method = "transaction_show"
-	Get-JsonContent -Method $method
 }
-function Resolve-Uri() {
+function Resolve-LbryUri() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Uri
 	)
 	$params = @{
 		uri = $Uri
 	}
 	$method = "resolve"
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-Version() {
+function Get-LbryVersion() {
 	$method = "version"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function Get-WalletAddressList() {
+function Get-LbryWalletAddressList() {
 	$method = "wallet_list"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function Get-WalletAddressUnused() {
+function Get-LbryWalletAddressUnused() {
 	$method = "wallet_unused_address"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function New-WalletAddress() {
+function New-LbryWalletAddress() {
 	$method = "wallet_new_address"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function Get-WalletBalance() {
+function Get-LbryWalletBalance() {
 	$method = "wallet_balance"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function Send-WalletCredits() {
+function Send-LbryWalletCredits() {
 	param (
-		[Parameter(Mandatory = $true)]
-		[Float]$Amount,
-		[Parameter(Mandatory = $true)]
-		[String]$Address
+		[Parameter(Position = 0, Mandatory = $true)]
+		[String]$Address,
+		[Parameter(Position = 1, Mandatory = $true)]
+		[Float]$Amount
 	)
 	$method = "send_amount_to_address"
 	$params = @{
-		ammount = $Amount
+		amount = $Amount
 	}
 	$params.Add("address", $Address)
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-WalletPublicKey() {
+function Get-LbryWalletPublicKey() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Address
 	)
 	$method = "wallet_public_key"
 	$params = @{
 		address = $Address
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
-function Get-WalletTransactionList() {
+function Get-LbryWalletTransactionList() {
 	$method = "transaction_list"
-	Get-JsonContent -Method $method
+	Get-LbryJsonContent -Method $method
 }
-function Test-WalletAddressOwnership() {
+function Test-LbryWalletAddressOwnership() {
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Position = 0, Mandatory = $true)]
 		[String]$Address
 	)
 	$method = "wallet_is_address_mine"
 	$params = @{
 		address = $Address
 	}
-	Get-JsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method -Params $params
 }
