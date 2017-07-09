@@ -223,12 +223,13 @@ function Get-LbryClaim() {
 	param (
 		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
 		[String]$Name,
-		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
-		[String]$Nout,
 		[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
 		[String]$Txid,
 		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
 		[String]$ClaimId,
+		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Txid")]
+		[String]$Nout,
 		[Parameter(Mandatory = $true, ParameterSetName = "Mine")]
 		[Switch]$Mine = $false,
 		[Parameter(Mandatory = $true, ParameterSetName = "Channel")]
@@ -250,7 +251,7 @@ function Get-LbryClaim() {
 	}
 	if ($set -eq "Txid") {
 		$params = @{
-			tx_id = $Txid
+			txid = $Txid
 		}
 	}
 	if ($set -eq "ClaimId") {
