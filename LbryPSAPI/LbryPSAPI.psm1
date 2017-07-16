@@ -654,7 +654,9 @@ function Get-LbryStream() {
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
 		[Parameter(Mandatory = $false)]
-		[String]$DownloadDirectory
+		[String]$DownloadDirectory,
+		[Parameter(Mandatory = $false)]
+		[Switch]$ShowStream
 	)
 	$method = "get"
 	$params = @{
@@ -669,7 +671,12 @@ function Get-LbryStream() {
 	if ($DownloadDirectory -ne "") {
 		$params.Add("download_directory", $DownloadDirectory)
 	}
-	Get-LbryJsonContent -Method $method -Params $params
+	if ($ShowStream) {
+		$result = Get-LbryJsonContent -Method $method -Params $params
+		Start-Process -FilePath $result.download_path
+	} else {
+		Get-LbryJsonContent -Method $method -Params $params
+	}
 }
 function Get-LbryStreamAvailability() {
 	param (
