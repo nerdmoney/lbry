@@ -671,9 +671,26 @@ function Get-LbryStream() {
 	if ($DownloadDirectory -ne "") {
 		$params.Add("download_directory", $DownloadDirectory)
 	}
+	
 	if ($ShowStream) {
-		$result = Get-LbryJsonContent -Method $method -Params $params
-		Start-Process -FilePath $result.download_path
+		$cost = Get-LbryStreamCostEstimate $Uri
+		$title = "Confirm"
+		$message = "Confirm Payment: `"$cost`" LBC?"
+		$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+						  "Pay and download stream."
+		$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+						 "Refuse payment and exit."
+		$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+		$pay = $host.ui.PromptForChoice($title, $message, $options, 0)
+		switch ($pay) {
+			0 {
+				$result = Get-LbryJsonContent -Method $method -Params $params
+				Start-Process -FilePath $result.download_path
+			}
+			1 {
+				Return
+			}
+		}
 	} else {
 		Get-LbryJsonContent -Method $method -Params $params
 	}
