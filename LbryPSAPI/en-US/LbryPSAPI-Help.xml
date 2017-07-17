@@ -2682,9 +2682,9 @@ written_bytes       : 51528645</dev:code>
 				<dev:defaultValue></dev:defaultValue>
 			</command:parameter>
 			<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named">
-				<maml:name>ShowStream</maml:name>
+				<maml:name>Show</maml:name>
 				<maml:description>
-					<maml:para>Plays media stream</maml:para>
+					<maml:para>Play media stream or show media content</maml:para>
 				</maml:description>
 				<command:parameterValue required="false" variableLength="false">Switch</command:parameterValue>
 				<dev:defaultValue>False</dev:defaultValue>
