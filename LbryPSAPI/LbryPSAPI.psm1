@@ -665,7 +665,7 @@ function Get-LbryStream() {
 	)
 	$method = "get"
 	$params = @{
-		uri = $Uri
+		uri  = $Uri
 	}
 	if ($FileName) {
 		$params.Add("file_name", $FileName)
@@ -675,6 +675,11 @@ function Get-LbryStream() {
 	}
 	if ($DownloadDirectory) {
 		$params.Add("download_directory", $DownloadDirectory)
+	}
+	$available = Get-LbryStreamAvailability $Uri
+	if ($available -eq "0.0" -or [String]::IsNullOrWhiteSpace($Available)) {
+		Write-Error "Stream is not available"
+		Return
 	}
 	$cost = Get-LbryStreamCostEstimate $Uri
 	if ($cost -ne "0.0") { 
