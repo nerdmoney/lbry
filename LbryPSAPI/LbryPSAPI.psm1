@@ -14,13 +14,13 @@
 	$params = @{
 		blob_hash = $BlobHash
 	}
-	if ($Timeout -ne "") {
+	if ($Timeout) {
 		$params.Add("timeout", $Timeout)
 	}
-	if ($Encoding -ne "") {
+	if ($Encoding) {
 		$params.Add("encoding", $Encoding)
 	}
-	if ($PaymentRateManager -ne "") {
+	if ($PaymentRateManager) {
 		$params.Add("payment_rate_manager", $PaymentRateManager)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -38,10 +38,10 @@ function Get-LbryBlobDescriptor() {
 	$params = @{
 		blob_hash = $BlobHash
 	}
-	if ($Timeout -ne "") {
+	if ($Timeout) {
 		$params.Add("timeout", $Timeout)
 	}
-	if ($PaymentRateManager -ne "") {
+	if ($PaymentRateManager) {
 		$params.Add("payment_rate_manager", $PaymentRateManager)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -94,16 +94,16 @@ function Get-LbryBlobHash() {
 			sd_hash = $SdHash
 		}
 	}
-	if ($Needed -ne "") {
+	if ($Needed) {
 		$params.Add("needed", $Needed)
 	}
-	if ($Finished -ne "") {
+	if ($Finished) {
 		$params.Add("finished", $Finished)
 	}
-	if ($PageSize -ne "") {
+	if ($PageSize) {
 		$params.Add("page_size", $PageSize)
 	}
-	if ($Page -ne "") {
+	if ($Page) {
 		$params.Add("page", $Page)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -119,7 +119,7 @@ function Get-LbryBlobPeer() {
 	$params = @{
 		blob_hash = $BlobHash
 	}
-	if ($Timeout -ne "") {
+	if ($Timeout) {
 		$params.Add("timeout", $Timeout)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -245,7 +245,7 @@ function Get-LbryClaim() {
 		$params = @{
 			name = $Name
 		}
-		if ($Nout -ne "") {
+		if ($Nout) {
 			$params.Add("nout", $Nout)
 		}
 	}
@@ -269,10 +269,10 @@ function Get-LbryClaim() {
 		$params = @{
 			uri = $Uri
 		}
-		if ($PageSize -ne "") {
+		if ($PageSize) {
 			$params.Add("page_size", $PageSize)
 		}
-		if ($Page -ne "") {
+		if ($Page) {
 			$params.Add("page", $Page)
 		}
 	}
@@ -282,7 +282,7 @@ function Get-LbryClaim() {
 		$result.$Uri.claims_in_channel
 	} else {
 		$result.claim
-		}
+	}
 	
 }
 function New-LbryClaim() {
@@ -331,28 +331,28 @@ function New-LbryClaim() {
 		license	    = $License
 		nsfw	    = $Nsfw
 	}
-	if ($Metadata -ne "") {
+	if ($Metadata) {
 		$params.Add("metadata", $Metadata)
 	}
-	if ($FilePath -ne "") {
+	if ($FilePath) {
 		$params.Add("file_path", $FilePath)
 	}
-	if ($Fee -ne "") {
+	if ($Fee) {
 		$params.Add("fee", $Fee)
 	}
-	if ($LicenseUrl -ne "") {
+	if ($LicenseUrl) {
 		$params.Add("license_url", $LicenseUrl)
 	}
-	if ($Thumbnail -ne "") {
+	if ($Thumbnail) {
 		$params.Add("thumbnail", $Thumbnail)
 	}
-	if ($Preview -ne "") {
+	if ($Preview) {
 		$params.Add("preview", $Preview)
 	}
-	if ($Sources -ne "") {
+	if ($Sources) {
 		$params.Add("sources", $Sources)
 	}
-	if ($ChannelName -ne "") {
+	if ($ChannelName) {
 		$params.Add("channel_name", $ChannelName)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -375,14 +375,19 @@ function Get-LbryDaemon() {
 function Get-LbryDaemonStatus() {
 	param (
 		[Parameter(Position = 0, Mandatory = $false)]
-		[Boolean]$SessionStatus = $false
+		[Switch]$SessionStatus
 	)
 	$method = "status"
-	$params = @{
-		session_status = $SessionStatus
+	if ($SessionStatus) {
+		$params = @{
+			session_status = $SessionStatus
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+		Return
 	}
-	Get-LbryJsonContent -Method $method -Params $params
+	Get-LbryJsonContent -Method $method
 }
+
 function Set-LbryDaemon() {
 	param (
 		[Parameter(Mandatory = $false)]
@@ -406,31 +411,31 @@ function Set-LbryDaemon() {
 	)
 	$method = "settings_set"
 	$params = @{}
-	if ($RunOnStartup -ne "") {
+	if ($RunOnStartup) {
 		$params.Add("run_on_startup", $RunOnStartup)
 	}
-	if ($DataRate -ne "") {
+	if ($DataRate) {
 		$params.Add("data_rate", $DataRate)
 	}
-	if ($MaxKeyFee -ne "") {
+	if ($MaxKeyFee) {
 		$params.Add("max_key_fee", $MaxKeyFee)
 	}
-	if ($DownloadDirectory -ne "") {
+	if ($DownloadDirectory) {
 		$params.Add("download_directory", $DownloadDirectory)
 	}
-	if ($MaxUpload -ne "") {
+	if ($MaxUpload) {
 		$params.Add("max_upload", $MaxUpload)
 	}
-	if ($MaxDownload -ne "") {
+	if ($MaxDownload) {
 		$params.Add("max_download", $MaxDownload)
 	}
-	if ($DownloadTimeout -ne "") {
+	if ($DownloadTimeout) {
 		$params.Add("download_timeout", $DownloadTimeout)
 	}
-	if ($SearchTimeout -ne "") {
+	if ($SearchTimeout) {
 		$params.Add("search_timeout", $SearchTimeout)
 	}
-	if ($CacheTime -ne "") {
+	if ($CacheTime) {
 		$params.Add("cache_time", $CacheTime)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -501,7 +506,7 @@ function Get-LbryFile() {
 			rowid = $RowId
 		}
 	}
-	if ($FullStatus -ne "") {
+	if ($FullStatus) {
 		$params.Add("full_status", $FullStatus)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -568,7 +573,7 @@ function Remove-LbryFile() {
 			rowid = $RowId
 		}
 	}
-	if ($DeleteTargetFile -ne "") {
+	if ($DeleteTargetFile) {
 		$params.Add("delete_target_file", $DeleteTargetFile)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -662,13 +667,13 @@ function Get-LbryStream() {
 	$params = @{
 		uri = $Uri
 	}
-	if ($FileName -ne "") {
+	if ($FileName) {
 		$params.Add("file_name", $FileName)
 	}
-	if ($Timeout -ne "") {
+	if ($Timeout) {
 		$params.Add("timeout", $Timeout)
 	}
-	if ($DownloadDirectory -ne "") {
+	if ($DownloadDirectory) {
 		$params.Add("download_directory", $DownloadDirectory)
 	}
 	$cost = Get-LbryStreamCostEstimate $Uri
@@ -706,10 +711,10 @@ function Get-LbryStreamAvailability() {
 	$params = @{
 		uri = $Uri
 	}
-	if ($SdTimeout -ne "") {
+	if ($SdTimeout) {
 		$params.Add("sd_timeout", $SdTimeout)
 	}
-	if ($PeerTimeout -ne "") {
+	if ($PeerTimeout) {
 		$params.Add("peer_timeout", $PeerTimeout)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
@@ -736,7 +741,7 @@ function Get-LbryStreamCostEstimate() {
 	$params = @{
 		uri = $Uri
 	}
-	if ($Size -ne "") {
+	if ($Size) {
 		$params.Add("size", $Size)
 	}
 	Get-LbryJsonContent -Method $method -Params $params
