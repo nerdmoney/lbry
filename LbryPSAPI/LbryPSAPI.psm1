@@ -233,7 +233,7 @@ function Get-LbryClaim() {
 		[Parameter(Mandatory = $true, ParameterSetName = "Mine")]
 		[Switch]$Mine = $false,
 		[Parameter(Mandatory = $true, ParameterSetName = "Channel")]
-		[String]$Uri,
+		[String]$ChannelUri,
 		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
 		[Int]$Page,
 		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
@@ -267,23 +267,35 @@ function Get-LbryClaim() {
 	if ($set -eq "Channel") {
 		$method = "claim_list_by_channel"
 		$params = @{
-			uri = $Uri
+			uri = $ChannelUri
+		}
+		$test = Get-LbryJsonContent -Method $method -Params $params
+		if ([String]::IsNullOrWhiteSpace($test.$ChannelUri.error) -eq $false) {
+			Write-Error $test.$ChannelUri.error
+			Return
 		}
 		if ($PageSize) {
 			$params.Add("page_size", $PageSize)
 		}
 		if ($Page) {
 			$params.Add("page", $Page)
+			$result = Get-LbryJsonContent -Method $method -Params $params
+			$result.$ChannelUri.claims_in_channel
+		} else {
+			$result = Get-LbryJsonContent -Method $method -Params $params
+			$totalPgs = $result.$ChannelUri.claims_in_channel_pages
+			$pgs = 1 .. $totalPgs
+			$params.Add("page","1")
+			foreach ($pg in $pgs) {
+				$params["page"] = $pg
+				$result = Get-LbryJsonContent -Method $method -Params $params
+				$result.$ChannelUri.claims_in_channel
+			}
 		}
+		Return
 	}
 	$result = Get-LbryJsonContent -Method $method -Params $params
-	
-	if ($set -eq "Channel") {
-		$result.$Uri.claims_in_channel
-	} else {
-		$result.claim
-	}
-	
+	$result.claim
 }
 function New-LbryClaim() {
 	param (
@@ -387,7 +399,6 @@ function Get-LbryDaemonStatus() {
 	}
 	Get-LbryJsonContent -Method $method
 }
-
 function Set-LbryDaemon() {
 	param (
 		[Parameter(Mandatory = $false)]
