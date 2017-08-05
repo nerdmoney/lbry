@@ -1,6 +1,8 @@
 ﻿function Get-LbryBlob() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[Alias('blob_hash')]
 		[String]$BlobHash,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
@@ -8,858 +10,990 @@
 		[ValidateSet('json')]
 		[String]$Encoding,
 		[Parameter(Mandatory = $false)]
-		[String]$PaymentRateManager
+		[Alias('payment_rate_manager')][String]$PaymentRateManager
 	)
-	$method = "blob_get"
-	$params = @{
-		blob_hash = $BlobHash
+	begin { $method = "blob_get" }
+	process {
+		$params = @{
+			blob_hash  = $BlobHash
+		}
+		if ($Timeout) {
+			$params.Add("timeout", $Timeout)
+		}
+		if ($Encoding) {
+			$params.Add("encoding", $Encoding)
+		}
+		if ($PaymentRateManager) {
+			$params.Add("payment_rate_manager", $PaymentRateManager)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($Timeout) {
-		$params.Add("timeout", $Timeout)
-	}
-	if ($Encoding) {
-		$params.Add("encoding", $Encoding)
-	}
-	if ($PaymentRateManager) {
-		$params.Add("payment_rate_manager", $PaymentRateManager)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryBlobDescriptor() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$SdHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[Alias('sd_hash')][String]$SdHash,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
 		[Parameter(Mandatory = $false)]
-		[String]$PaymentRateManager
+		[Alias('payment_rate_manager')][String]$PaymentRateManager
 	)
-	$method = "descriptor_get"
-	$params = @{
-		blob_hash = $BlobHash
+	begin { $method = "descriptor_get" }
+	process {
+		$params = @{
+			blob_hash = $BlobHash
+		}
+		if ($Timeout) {
+			$params.Add("timeout", $Timeout)
+		}
+		if ($PaymentRateManager) {
+			$params.Add("payment_rate_manager", $PaymentRateManager)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($Timeout) {
-		$params.Add("timeout", $Timeout)
-	}
-	if ($PaymentRateManager) {
-		$params.Add("payment_rate_manager", $PaymentRateManager)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryBlobHash() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $false, ParameterSetName = 'All')]
-		[Switch]$All = $false,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
+		[Parameter(Mandatory = $true, ParameterSetName = 'all')]
+		[Switch]$All,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = 'uri')]
 		[String]$Uri,
-		[Parameter(Mandatory = $false, ParameterSetName = 'StreamHash')]
-		[String]$StreamHash,
-		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
-		[String]$SdHash,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'StreamHash')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = 'stream_hash')]
+		[Alias('stream_hash')][String]$StreamHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = 'sd_hash')]
+		[Alias('sd_hash')][String]$SdHash,
+		[Parameter(Mandatory = $false, ParameterSetName = 'uri')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'stream_hash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'sd_hash')]
 		[Boolean]$Needed,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'StreamHash')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'uri')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'stream_hash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'sd_hash')]
 		[Boolean]$Finished,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'StreamHash')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
-		[Int]$PageSize,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Uri')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'StreamHash')]
-		[Parameter(Mandatory = $false, ParameterSetName = 'SdHash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'uri')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'stream_hash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'sd_hash')]
+		[Alias('page_size')][Int]$PageSize,
+		[Parameter(Mandatory = $false, ParameterSetName = 'uri')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'stream_hash')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'sd_hash')]
 		[Int]$Page
 	)
-	$method = "blob_list"
-	if ($All) {
-		Get-LbryJsonContent -method $method
-		Return
-	}
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Uri") {
-		$params = @{
-			uri = $Uri
-		}
-	}
-	if ($set -eq "StreamHash") {
-		$params = @{
-			stream_hash = $StreamHash
-		}
-	}
-	if ($set -eq "SdHash") {
-		$params = @{
-			sd_hash = $SdHash
-		}
-	}
-	if ($Needed) {
-		$params.Add("needed", $Needed)
-	}
-	if ($Finished) {
-		$params.Add("finished", $Finished)
-	}
-	if ($PageSize) {
-		$params.Add("page_size", $PageSize)
-	}
-	if ($Page) {
-		$params.Add("page", $Page)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Get-LbryBlobPeer() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$BlobHash,
-		[Parameter(Mandatory = $false)]
-		[Int]$Timeout
-	)
-	$method = "peer_list"
-	$params = @{
-		blob_hash = $BlobHash
-	}
-	if ($Timeout) {
-		$params.Add("timeout", $Timeout)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Remove-LbryBlob() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$BlobHash
-	)
-	$method = "blob_delete"
-	$params = @{
-		blob_hash = $BlobHash
-	}
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Get-LbryBlock() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = 'Blockhash')]
-		[String]$Blockhash,
-		[Parameter(Mandatory = $true, ParameterSetName = 'Height')]
-		[String]$Height
-	)
-	
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Blockhash") {
-		$params = @{
-			blockhash = $blockhash
-		}
-	} else {
-		$params = @{
-			height = $Height
-		}
-	}
-	
-	$method = "block_show"
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Sync-LbryBlob() {
-	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "AnnounceAll")]
-		[Switch]$AnnounceAll = $false,
-		[Parameter(Mandatory = $true, ParameterSetName = "ReflectAll")]
-		[Switch]$ReflectAll = $false
-	)
-	if ($AnnounceAll) {
-		$method = "blob_announce_all"
-	}
-	if ($ReflectAll) {
-		$method = "blob_reflect_all"
-	}
-	Get-LbryJsonContent -Method $method
-}
-function New-LbryBugReport() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$Message
-	)
-	$params = @{
-		message = $Message
-	}
-	$method = "report_bug"
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Get-LbryChannel() {
-	$method = "channel_list_mine"
-	Get-LbryJsonContent -Method $method
-}
-function New-LbryChannel() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$ChannelName,
-		[Parameter(Position = 1, Mandatory = $true)]
-		[float]$Amount
-	)
-	$method = "channel_new"
-	$params = @{
-		channel_name = $ChannelName
-		amount	     = $Amount
-	}
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Add-LbryClaimSupport() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$Name,
-		[Parameter(Position = 1, Mandatory = $true)]
-		[String]$ClaimId,
-		[Parameter(Position = 2, Mandatory = $true)]
-		[float]$Amount
-	)
-	$method = "claim_new_support"
-	$params = @{
-		name   = $Name
-		claim_id = $ClaimID
-		amount   = $Amount
-	}
-
-	Get-LbryJsonContent -Method $method -Params $params
-}
-function Get-LbryClaim() {
-	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
-		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
-		[String]$Txid,
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-		[String]$ClaimId,
-		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Txid")]
-		[String]$Nout,
-		[Parameter(Mandatory = $true, ParameterSetName = "Mine")]
-		[Switch]$Mine = $false,
-		[Parameter(Mandatory = $true, ParameterSetName = "Channel")]
-		[String]$ChannelUri,
-		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
-		[Int]$Page,
-		[Parameter(Mandatory = $false, ParameterSetName = "Channel")]
-		[Int]$PageSize
-	)
-	$method = "claim_show"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {
-		$params = @{
-			name = $Name
-		}
-		if ($Nout) {
-			$params.Add("nout", $Nout)
-		}
-	}
-	if ($set -eq "Txid") {
-		$params = @{
-			txid = $Txid
-		}
-	}
-	if ($set -eq "ClaimId") {
-		$params = @{
-			claim_id = $ClaimId
-		}
-	}
-	if ($set -eq "Mine") {
-		$method = "claim_list_mine"
-		Get-LbryJsonContent -Method $method
-		Return
-	}
-	if ($set -eq "Channel") {
-		$method = "claim_list_by_channel"
-		$params = @{
-			uri = $ChannelUri
-		}
-		$test = Get-LbryJsonContent -Method $method -Params $params
-		if ([String]::IsNullOrWhiteSpace($test.$ChannelUri.error) -eq $false) {
-			Write-Error $test.$ChannelUri.error
+	begin { $method = "blob_list" }
+	process {
+		if ($all) {
+			Get-LbryJsonContent -method $method
 			Return
+		}
+		$set = $PSCmdlet.ParameterSetName
+		if ($set -eq "uri") {
+			$params = @{
+				uri	    = $Uri
+			}
+		}
+		if ($set -eq "stream_hash") {
+			$params = @{
+				stream_hash	    = $StreamHash
+			}
+		}
+		if ($set -eq "sd_hash") {
+			$params = @{
+				sd_hash	    = $SdHash
+			}
+		}
+		if ($Needed) {
+			$params.Add("needed", $Needed)
+		}
+		if ($Finished) {
+			$params.Add("finished", $Finished)
 		}
 		if ($PageSize) {
 			$params.Add("page_size", $PageSize)
 		}
 		if ($Page) {
 			$params.Add("page", $Page)
-			$result = Get-LbryJsonContent -Method $method -Params $params
-			$result.$ChannelUri.claims_in_channel
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Get-LbryBlobPeer() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipeline = $true, Position = 0, Mandatory = $true)]
+		[String]$BlobHash,
+		[Parameter(Position = 1, Mandatory = $false)]
+		[Int]$Timeout
+	)
+	begin { $method = "peer_list" }
+	process {
+		$params = @{
+			blob_hash	  = $BlobHash
+		}
+		if ($Timeout) {
+			$params.Add("timeout", $Timeout)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Remove-LbryBlob() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[Alias('blob_hash')]
+		[String]$BlobHash
+	)
+	begin { $method = "blob_delete" }
+	process {
+		$params = @{
+			blob_hash	  = $BlobHash
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Get-LbryBlock() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = 'blockhash')]
+		[String]$BlockHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = 'height')]
+		[String]$Height
+	)
+	begin { $method = "block_show" }
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		if ($set -eq "blockhash") {
+			$params = @{
+				blockhash	  = $BlockHash
+			}
 		} else {
-			$result = Get-LbryJsonContent -Method $method -Params $params
-			$totalPgs = $result.$ChannelUri.claims_in_channel_pages
-			$pgs = 1 .. $totalPgs
-			$params.Add("page","1")
-			foreach ($pg in $pgs) {
-				$params["page"] = $pg
-				$result = Get-LbryJsonContent -Method $method -Params $params
-				$result.$ChannelUri.claims_in_channel
+			$params = @{
+				height	   = $Height
 			}
 		}
-		Return
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	$result = Get-LbryJsonContent -Method $method -Params $params
-	$result.claim
+}
+function Sync-LbryBlob() {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true, ParameterSetName = "announce_all")]
+		[Switch]$AnnounceAll = $false,
+		[Parameter(Mandatory = $true, ParameterSetName = "reflect_all")]
+		[Switch]$ReflectAll = $false
+	)
+	$set = $PSCmdlet.ParameterSetName
+	if ($set -eq $AnnounceAll) {
+		$method = "blob_announce_all"
+	}
+	if ($set -eq $ReflectAll) {
+		$method = "blob_reflect_all"
+	}
+	Get-LbryJsonContent -Method $method
+}
+function New-LbryBugReport() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipeline = $true, Position = 0, Mandatory = $true)]
+		[String]$Message
+	)
+	begin { $method = "report_bug" }
+	process {
+		$params = @{
+			message    = $Message
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Get-LbryChannel() {
+	[CmdletBinding()]
+	$method = "channel_list_mine"
+	Get-LbryJsonContent -Method $method
+}
+function New-LbryChannel() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[Alias('channel_name')][String]$ChannelName,
+		[Parameter(Position = 1, Mandatory = $true)]
+		[Float]$Amount
+	)
+	begin { $method = "channel_new" }
+	process {
+		$params = @{
+			channel_name	 = $ChannelName
+			amount		     = $Amount
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Add-LbryClaimSupport() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[String]$Name,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 1, Mandatory = $true)]
+		[Alias('claim_id')][String]$ClaimId,
+		[Parameter(Position = 2, Mandatory = $true)]
+		[Float]$Amount
+	)
+	begin { $method = "claim_new_support" }
+	process {
+		$params = @{
+			name		 = $Name
+			claim_id	 = $ClaimId
+			amount	     = $Amount
+		}
+		Get-LbryJsonContent -Method $method -Params $params
+	}
+}
+function Get-LbryClaim() {
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = "name")]
+		[String]$Name,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "txid")]
+		[String]$Txid,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "claim_id")]
+		[Alias('claim_id')][String]$ClaimId,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "txid")]
+		[String]$Nout,
+		[Parameter(Mandatory = $true, ParameterSetName = "mine")]
+		[Switch]$Mine = $false,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "channel")]
+		[Alias('channel_name')][String]$ChannelName,
+		[Parameter(Mandatory = $false, ParameterSetName = "channel")]
+		[Int]$Page,
+		[Parameter(Mandatory = $false, ParameterSetName = "channel")]
+		[Alias('page_size')][Int]$PageSize
+	)
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		if ($set -eq "name") {
+			$method = "claim_show"
+			$params = @{
+				name    = $Name
+			}
+			if ($Nout) {
+				$params.Add("nout", $Nout)
+			}
+		}
+		if ($set -eq "txid") {
+			$method = "claim_show"
+			$params = @{
+				txid	 = $Txid
+			}
+		}
+		if ($set -eq "claim_id") {
+			$method = "claim_show"
+			$params = @{
+				claim_id	 = $ClaimId
+			}
+		}
+		if ($set -eq "mine") {
+			$method = "claim_list_mine"
+			Get-LbryJsonContent -Method $method
+			Return
+		}
+		if ($set -eq "channel") {
+			$method = "claim_list_by_channel"
+			$params = @{
+				uri	    = $ChannelName
+			}
+			$test = Get-LbryJsonContent -Method $method -Params $params
+			if ($test.$ChannelName.error) {
+				Write-Error $test.$ChannelName.error
+				Return
+			}
+			if ($PageSize) {
+				$params.Add("page_size", $PageSize)
+			}
+			if ($Page) {
+				$params.Add("page", $Page)
+				$result = Get-LbryJsonContent -Method $method -Params $params
+				$result.$ChannelName.claims_in_channel
+			} else {
+				$result = Get-LbryJsonContent -Method $method -Params $params
+				$totalPgs = $result.$ChannelName.claims_in_channel_pages
+				$pgs = 1 .. $totalPgs
+				$params.Add("page", "1")
+				foreach ($pg in $pgs) {
+					$params["page"] = $pg
+					$result = Get-LbryJsonContent -Method $method -Params $params
+					$result.$ChannelName.claims_in_channel
+				}
+			}
+			Return
+		}
+		$result = Get-LbryJsonContent -Method $method -Params $params
+		$result.claim
+	}
 }
 function New-LbryClaim() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[String]$Name,
-		[Parameter(Mandatory = $true)]
-		[float]$Bid = "1",
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
+		[Float]$Bid = "1",
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
 		[HashTable[]]$Metadata,
-		[Parameter(Mandatory = $false)]
-		[String]$FilePath,
-		[Parameter(Mandatory = $false)]
-		[HashTable]$fee,
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('file_path')][String]$FilePath,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[HashTable]$Fee,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[String]$Title,
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[String]$Description,
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[String]$Author,
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[String]$Language = "en",
-		[Parameter(Mandatory = $true)]
-		[String]$License = "Public Domain",
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
+		[String]$License = "Creative Commons",
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('license_url')]
 		[String]$LicenseUrl,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
 		[String]$Thumbnail,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
 		[String]$Preview,
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
 		[Boolean]$Nsfw = $true,
-		[Parameter(Mandatory = $false)]
-		[HashTable]$Sources,
-		[Parameter(Mandatory = $false)]
-		[String]$ChannelName
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[HashTable]$sources,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('channel_name')][String]$ChannelName
 	)
-	$method = "publish"
-	$params = @{
-		name	    = $Name
-		bid		    = $Bid
-		title	    = $Title
-		description = $Description
-		author	    = $Author
-		language    = $Language
-		license	    = $License
-		nsfw	    = $Nsfw
+	begin { $method = "publish" }
+	process {
+		$params = @{
+			name		    = $Name
+			bid			    = $Bid
+			title		    = $Title
+			description	    = $Description
+			author		    = $Author
+			language	    = $Language
+			license		    = $License
+			nsfw		    = $Nsfw
+		}
+		if ($Metadata) {
+			$params.Add("metadata", $Metadata)
+		}
+		if ($FilePath) {
+			$params.Add("file_path", $FilePath)
+		}
+		if ($Fee) {
+			$params.Add("fee", $Fee)
+		}
+		if ($LicenseUrl) {
+			$params.Add("license_url", $LicenseUrl)
+		}
+		if ($Thumbnail) {
+			$params.Add("thumbnail", $Thumbnail)
+		}
+		if ($Preview) {
+			$params.Add("preview", $Preview)
+		}
+		if ($sources) {
+			$params.Add("sources", $sources)
+		}
+		if ($ChannelName) {
+			$params.Add("channel_name", $ChannelName)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($Metadata) {
-		$params.Add("metadata", $Metadata)
-	}
-	if ($FilePath) {
-		$params.Add("file_path", $FilePath)
-	}
-	if ($Fee) {
-		$params.Add("fee", $Fee)
-	}
-	if ($LicenseUrl) {
-		$params.Add("license_url", $LicenseUrl)
-	}
-	if ($Thumbnail) {
-		$params.Add("thumbnail", $Thumbnail)
-	}
-	if ($Preview) {
-		$params.Add("preview", $Preview)
-	}
-	if ($Sources) {
-		$params.Add("sources", $Sources)
-	}
-	if ($ChannelName) {
-		$params.Add("channel_name", $ChannelName)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Remove-LbryClaim() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$ClaimId
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
+		[Alias('claim_id')][String]$ClaimId
 	)
-	$method = "claim_abandon"
-	$params = @{
-		claim_id = $ClaimId
+	begin { $method = "claim_abandon" }
+	process {
+		$params = @{
+			claim_id	 = $ClaimId
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryDaemon() {
 	$method = "settings_get"
 	Get-LbryJsonContent -Method $method
 }
 function Get-LbryDaemonStatus() {
+	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory = $false)]
+		[Alias('session_status')]
 		[Switch]$SessionStatus
 	)
-	$method = "status"
-	if ($SessionStatus) {
-		$params = @{
-			session_status = $SessionStatus
+	begin { $method = "status" }
+	process {
+		if ($SessionStatus) {
+			$params = @{
+				session_status	   = $SessionStatus
+			}
+			Get-LbryJsonContent -Method $method -Params $params
+			Return
 		}
-		Get-LbryJsonContent -Method $method -Params $params
-		Return
+		Get-LbryJsonContent -Method $method
 	}
-	Get-LbryJsonContent -Method $method
 }
 function Set-LbryDaemon() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('run_on_startup')]
 		[Boolean]$RunOnStartup,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('data_rate')]
 		[Float]$DataRate,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('max_key_fee')]
 		[Float]$MaxKeyFee,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('download_directory')]
 		[String]$DownloadDirectory,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('max_upload')]
 		[Float]$MaxUpload,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('max_download')]
 		[Float]$MaxDownload,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('download_timeout')]
 		[Int]$DownloadTimeout,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('search_timeout')]
 		[Float]$SearchTimeout,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('cache_time')]
 		[Int]$CacheTime
 	)
-	$method = "settings_set"
-	$params = @{}
-	if ($RunOnStartup) {
-		$params.Add("run_on_startup", $RunOnStartup)
+	begin { $method = "settings_set" }
+	process {
+		$params = @{ }
+		if ($RunOnStartup) {
+			$params.Add("run_on_startup", $RunOnStartup)
+		}
+		if ($DataRate) {
+			$params.Add("data_rate", $DataRate)
+		}
+		if ($MaxKeyFee) {
+			$params.Add("max_key_fee", $MaxKeyFee)
+		}
+		if ($DownloadDirectory) {
+			$params.Add("download_directory", $DownloadDirectory)
+		}
+		if ($MaxUpload) {
+			$params.Add("max_upload", $MaxUpload)
+		}
+		if ($MaxDownload) {
+			$params.Add("max_download", $MaxDownload)
+		}
+		if ($DownloadTimeout) {
+			$params.Add("download_timeout", $DownloadTimeout)
+		}
+		if ($SearchTimeout) {
+			$params.Add("search_timeout", $SearchTimeout)
+		}
+		if ($CacheTime) {
+			$params.Add("cache_time", $CacheTime)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($DataRate) {
-		$params.Add("data_rate", $DataRate)
-	}
-	if ($MaxKeyFee) {
-		$params.Add("max_key_fee", $MaxKeyFee)
-	}
-	if ($DownloadDirectory) {
-		$params.Add("download_directory", $DownloadDirectory)
-	}
-	if ($MaxUpload) {
-		$params.Add("max_upload", $MaxUpload)
-	}
-	if ($MaxDownload) {
-		$params.Add("max_download", $MaxDownload)
-	}
-	if ($DownloadTimeout) {
-		$params.Add("download_timeout", $DownloadTimeout)
-	}
-	if ($SearchTimeout) {
-		$params.Add("search_timeout", $SearchTimeout)
-	}
-	if ($CacheTime) {
-		$params.Add("cache_time", $CacheTime)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Stop-LbryDaemon() {
+	[CmdletBinding()]
 	$method = "daemon_stop"
 	Get-LbryJsonContent -Method $method
 }
 function Get-LbryFile() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = "name")]
 		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-		[String]$SdHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[String]$FileName,
-		[Parameter(Mandatory = $true, ParameterSetName = "StreamHash")]
-		[String]$StreamHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-		[String]$ClaimId,
-		[Parameter(Mandatory = $true, ParameterSetName = "Outpoint")]
-		[String]$OutPoint,
-		[Parameter(Mandatory = $true, ParameterSetName = "RowId")]
-		[Int]$RowId,
-		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $false, ParameterSetName = "SdHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "FileName")]
-		[Parameter(Mandatory = $false, ParameterSetName = "StreamHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "ClaimId")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Outpoint")]
-		[Parameter(Mandatory = $false, ParameterSetName = "RowId")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "sd_hash")]
+		[Alias('sd_hash')][String]$SdHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "file_name")]
+		[Alias('file_name')][String]$FileName,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "stream_hash")]
+		[Alias('stream_hash')][String]$StreamHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "claim_id")]
+		[Alias('claim_id')][String]$ClaimId,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "outpoint")]
+		[String]$Outpoint,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "rowid")]
+		[Int]$Rowid,
+		[Parameter(Mandatory = $false, ParameterSetName = "name")]
+		[Parameter(Mandatory = $false, ParameterSetName = "sd_hash")]
+		[Parameter(Mandatory = $false, ParameterSetName = "file_name")]
+		[Parameter(Mandatory = $false, ParameterSetName = "stream_hash")]
+		[Parameter(Mandatory = $false, ParameterSetName = "claim_id")]
+		[Parameter(Mandatory = $false, ParameterSetName = "outpoint")]
+		[Parameter(Mandatory = $false, ParameterSetName = "rowid")]
+		[Alias('full_status')]
 		[Boolean]$FullStatus
 	)
-	$method = "file_list"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {
-		$params = @{
-			name = $Name
+	begin { $method = "file_list" }
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		if ($set -eq "name") {
+			$params = @{
+				name	 = $Name
+			}
 		}
-	}
-	if ($set -eq "SdHash") {
-		$params = @{
-			sd_hash = $SdHash
+		if ($set -eq "sd_hash") {
+			$params = @{
+				sd_hash	    = $SdHash
+			}
 		}
-	}
-	if ($set -eq "FileName") {
-		$params = @{
-			file_name = $FileName
+		if ($set -eq "file_name") {
+			$params = @{
+				file_name	  = $FileName
+			}
 		}
-	}
-	if ($set -eq "StreamHash") {
-		$params = @{
-			stream_hash = $StreamHash
+		if ($set -eq "stream_hash") {
+			$params = @{
+				stream_hash	    = $StreamHash
+			}
 		}
-	}
-	if ($set -eq "ClaimId") {
-		$params = @{
-			claim_id = $ClaimId
+		if ($set -eq "claim_id") {
+			$params = @{
+				claim_id	 = $ClaimId
+			}
 		}
-	}
-	if ($set -eq "Outpoint") {
-		$params = @{
-			outpoint = $Outpoint
+		if ($set -eq "outpoint") {
+			$params = @{
+				outpoint	 = $Outpoint
+			}
 		}
-	}
-	if ($set -eq "RowId") {
-		$params = @{
-			rowid = $RowId
+		if ($set -eq "rowid") {
+			$params = @{
+				rowid	  = $Rowid
+			}
 		}
+		if ($FullStatus) {
+			$params.Add("full_status", $FullStatus)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($FullStatus) {
-		$params.Add("full_status", $FullStatus)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Remove-LbryFile() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = "name")]
 		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-		[String]$SdHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[String]$FileName,
-		[Parameter(Mandatory = $true, ParameterSetName = "StreamHash")]
-		[String]$StreamHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "ClaimId")]
-		[String]$ClaimId,
-		[Parameter(Mandatory = $true, ParameterSetName = "Outpoint")]
-		[String]$OutPoint,
-		[Parameter(Mandatory = $true, ParameterSetName = "RowId")]
-		[Int]$RowId,
-		[Parameter(Mandatory = $false, ParameterSetName = "Name")]
-		[Parameter(Mandatory = $false, ParameterSetName = "SdHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "FileName")]
-		[Parameter(Mandatory = $false, ParameterSetName = "StreamHash")]
-		[Parameter(Mandatory = $false, ParameterSetName = "ClaimId")]
-		[Parameter(Mandatory = $false, ParameterSetName = "Outpoint")]
-		[Parameter(Mandatory = $false, ParameterSetName = "RowId")]
-		[Boolean]$DeleteTargetFile
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "sd_hash")]
+		[Alias('sd_hash')][String]$SdHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "file_name")]
+		[Alias('file_name')][String]$FileName,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "stream_hash")]
+		[Alias('stream_hash')][String]$StreamHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "claim_id")]
+		[Alias('claim_id')][String]$ClaimId,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "outpoint")]
+		[String]$Outpoint,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "rowid")]
+		[Int]$Rowid,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "sd_hash")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "file_name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "stream_hash")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "claim_id")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "outpoint")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false, ParameterSetName = "rowid")]
+		[Boolean]$delete_target_file
 	)
-	$method = "file_delete"
-	$set = $PSCmdlet.ParameterSetName
-	if ($set -eq "Name") {
-		$params = @{
-			name = $Name
+	begin { $method = "file_delete" }
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		if ($set -eq "name") {
+			$params = @{
+				name	 = $Name
+			}
 		}
-	}
-	if ($set -eq "SdHash") {
-		$params = @{
-			sd_hash = $SdHash
+		if ($set -eq "sd_hash") {
+			$params = @{
+				sd_hash	    = $SdHash
+			}
 		}
-	}
-	if ($set -eq "FileName") {
-		$params = @{
-			file_name = $FileName
+		if ($set -eq "file_name") {
+			$params = @{
+				file_name	  = $FileName
+			}
 		}
-	}
-	if ($set -eq "StreamHash") {
-		$params = @{
-			stream_hash = $StreamHash
+		if ($set -eq "stream_hash") {
+			$params = @{
+				stream_hash	    = $StreamHash
+			}
 		}
-	}
-	if ($set -eq "ClaimId") {
-		$params = @{
-			claim_id = $ClaimId
+		if ($set -eq "claim_id") {
+			$params = @{
+				claim_id	 = $ClaimId
+			}
 		}
-	}
-	if ($set -eq "Outpoint") {
-		$params = @{
-			outpoint = $Outpoint
+		if ($set -eq "outpoint") {
+			$params = @{
+				outpoint	 = $Outpoint
+			}
 		}
-	}
-	if ($set -eq "RowId") {
-		$params = @{
-			rowid = $RowId
+		if ($set -eq "rowid") {
+			$params = @{
+				rowid	  = $Rowid
+			}
 		}
+		if ($delete_target_file) {
+			$params.Add("delete_target_file", $delete_target_file)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($DeleteTargetFile) {
-		$params.Add("delete_target_file", $DeleteTargetFile)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Start-LbryFileDownload() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = "name")]
 		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-		[String]$SdHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[String]$FileName
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "sd_hash")]
+		[Alias('sd_hash')][String]$SdHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "file_name")]
+		[Alias('file_name')][String]$FileName
 	)
-	$method = "file_set_status"
-	$set = $PSCmdlet.ParameterSetName
-	$params = @{
-		status = "start"
+	begin { $method = "file_set_status" }
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		$params = @{
+			status	   = "start"
+		}
+		if ($set -eq "name") {
+			$params.Add("name", $Name)
+		}
+		if ($set -eq "sd_hash") {
+			$params.Add("sd_hash", $SdHash)
+		}
+		if ($set -eq "file_name") {
+			$params.Add("file_name", $FileName)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($set -eq "Name") {
-		$params.Add("name", $Name)
-	}
-	if ($set -eq "SdHash") {
-		$params.Add("sd_hash", $SdHash)
-	}
-	if ($set -eq "FileName") {
-		$params.Add("file_name", $FileName)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Stop-LbryFileDownload() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true, ParameterSetName = "Name")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true, ParameterSetName = "name")]
 		[String]$Name,
-		[Parameter(Mandatory = $true, ParameterSetName = "SdHash")]
-		[String]$SdHash,
-		[Parameter(Mandatory = $true, ParameterSetName = "FileName")]
-		[String]$FileName
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "sd_hash")]
+		[Alias('sd_hash')][String]$SdHash,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "file_name")]
+		[Alias('file_name')][String]$FileName
 	)
-	$method = "file_set_status"
-	$set = $PSCmdlet.ParameterSetName
-	$params = @{
-		status = "stop"
+	begin { $method = "file_set_status" }
+	process {
+		$set = $PSCmdlet.ParameterSetName
+		$params = @{
+			status	   = "stop"
+		}
+		if ($set -eq "name") {
+			$params.Add("name", $Name)
+		}
+		if ($set -eq "sd_hash") {
+			$params.Add("sd_hash", $SdHash)
+		}
+		if ($set -eq "file_name") {
+			$params.Add("file_name", $FileName)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($set -eq "Name") {
-		$params.Add("name", $Name)
-	}
-	if ($set -eq "SdHash") {
-		$params.Add("sd_hash", $SdHash)
-	}
-	if ($set -eq "FileName") {
-		$params.Add("file_name", $FileName)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryJsonContent() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Method,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 1, Mandatory = $false)]
 		[Hashtable]$Params
 	)
-	$uri = "http://localhost:5279/lbryapi"
-	if (($Params -eq "") -or ($Params -eq $null)) {
-		$data = ConvertTo-Json @{
-			method = $method
+	begin { $uri = "http://localhost:5279/lbryapi" }
+	process {
+		if (($params -eq "") -or ($params -eq $null)) {
+			$data = ConvertTo-Json @{
+				method	   = $Method
+			}
+		} else {
+			$data = ConvertTo-Json @{
+				method	   = $Method; params = $Params
+			}
 		}
-	} else {
-		$data = ConvertTo-Json @{
-			method = $method; params = $params
-		}
+		Write-Verbose $data
+		$output = Invoke-WebRequest -uri $uri -Method Post -Body $data
+		$content = ConvertFrom-Json $output.Content
+		$content.result
 	}
-	#Write-Host $data
-	$output = Invoke-WebRequest -Uri $uri -Method Post -Body $data
-	$content = ConvertFrom-Json $output.Content
-	$content.result
 }
 function Get-LbryStream() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipeline = $true, Position = 0, Mandatory = $true)]
 		[String]$Uri,
-		[Parameter(Mandatory = $false)]
-		[String]$FileName,
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('file_name')][String]$FileName,
 		[Parameter(Mandatory = $false)]
 		[Int]$Timeout,
-		[Parameter(Mandatory = $false)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $false)]
+		[Alias('download_directory')]
 		[String]$DownloadDirectory,
 		[Parameter(Mandatory = $false)]
 		[Switch]$Show
 	)
-	$method = "get"
-	$params = @{
-		uri  = $Uri
-	}
-	if ($FileName) {
-		$params.Add("file_name", $FileName)
-	}
-	if ($Timeout) {
-		$params.Add("timeout", $Timeout)
-	}
-	if ($DownloadDirectory) {
-		$params.Add("download_directory", $DownloadDirectory)
-	}
-	$available = Get-LbryStreamAvailability $Uri
-	if ($available -eq "0.0" -or [String]::IsNullOrWhiteSpace($Available)) {
-		Write-Error "Stream is not available"
-		Return
-	}
-	$cost = Get-LbryStreamCostEstimate $Uri
-	if ($cost -ne "0.0") { 
-		$title = "Payment Required"
-		$message = "Confirm Payment: `"$cost`" LBC?"
-		$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
-						  "Pay and download stream."
-		$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
-						 "Refuse payment and exit."
-		$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-		$pay = $host.ui.PromptForChoice($title, $message, $options, 0)
-		if ($pay -eq 1) {
-			Return
+	begin { $method = "get" }
+	process {
+		$params = @{
+			uri	      = $Uri
 		}
-	}
-	if ($Show) {
-		$result = Get-LbryJsonContent -Method $method -Params $params
-		$result
-		Start-Process -FilePath $result.download_path
-	} else {
-		Get-LbryJsonContent -Method $method -Params $params
+		if ($FileName) {
+			$params.Add("file_name", $FileName)
+		}
+		if ($Timeout) {
+			$params.Add("timeout", $Timeout)
+		}
+		if ($DownloadDirectory) {
+			$params.Add("download_directory", $DownloadDirectory)
+		}
+		$available = Get-LbryStreamAvailability $Uri
+		if ($available -eq "0.0" -or [String]::IsNullOrWhiteSpace($available)) {
+			Write-Error "Stream is not available"
+			Break
+		}
+		$cost = Get-LbryStreamCostEstimate $Uri
+		if ($cost -ne "0.0") {
+			$Title = "Payment Required"
+			$Message = "Confirm Payment: `"$cost`" LBC?"
+			$yes = New-Object System.Management.Automation.Host.Choicedescription "&Yes", `
+							  "Pay and download stream."
+			$no = New-Object System.Management.Automation.Host.Choicedescription "&No", `
+							 "Refuse payment and exit."
+			$options = [System.Management.Automation.Host.Choicedescription[]]($yes, $no)
+			$pay = $host.ui.PromptForChoice($Title, $Message, $options, 0)
+			if ($pay -eq 1) {
+				Return
+			}
+		}
+		if ($Show) {
+			$result = Get-LbryJsonContent -Method $method -Params $params
+			$result
+			Start-Process -FilePath $result.download_path
+		} else {
+			Get-LbryJsonContent -Method $method -Params $params
+		}
 	}
 }
 function Get-LbryStreamAvailability() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Uri,
 		[Parameter(Mandatory = $false)]
+		[Alias('sd_timeout')]
 		[Int]$SdTimeout,
 		[Parameter(Mandatory = $false)]
+		[Alias('peer_timeout')]
 		[Int]$PeerTimeout
 	)
-	$method = "get_availability"
-	$params = @{
-		uri = $Uri
+	begin { $method = "get_availability" }
+	process {
+		$params = @{
+			uri	= $Uri
+		}
+		if ($SdTimeout) {
+			$params.Add("sd_timeout", $SdTimeout)
+		}
+		if ($PeerTimeout) {
+			$params.Add("peer_timeout", $PeerTimeout)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($SdTimeout) {
-		$params.Add("sd_timeout", $SdTimeout)
-	}
-	if ($PeerTimeout) {
-		$params.Add("peer_timeout", $PeerTimeout)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Sync-LbryStream() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
-		[String]$SdHash
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
+		[Alias('sd_hash')][String]$SdHash
 	)
-	$params = @{
-		sd_hash = $SdHash
+	begin { $method = "reflect" }
+	process {
+		$params = @{
+			sd_hash	    = $SdHash
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	$method = "reflect"
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryStreamCostEstimate() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Uri,
 		[Parameter(Mandatory = $false)]
 		[Int]$Size
 	)
-	$method = "stream_cost_estimate"
-	$params = @{
-		uri = $Uri
+	begin { $method = "stream_cost_estimate" }
+	process {
+		$params = @{
+			uri	    = $Uri
+		}
+		if ($Size) {
+			$params.Add("size", $Size)
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	if ($Size) {
-		$params.Add("size", $Size)
-	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Resolve-LbryStream() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Name
 	)
-	$params = @{
-		name = $Name
+	begin { $method = "resolve_name" }
+	process {
+		$params = @{
+			name	 = $Name
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	$method = "resolve_name"
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryTransaction() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory = $true, ParameterSetName = "Txid")]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Mandatory = $true, ParameterSetName = "txid")]
 		[String]$Txid,
-		[Parameter(Mandatory = $true, ParameterSetName = "Wallet")]
+		[Parameter(Mandatory = $true, ParameterSetName = "wallet")]
 		[Switch]$Wallet
 	)
-	if ($Wallet) {
-		$method = "transaction_list"
-		Get-LbryJsonContent -Method $method
-		Return
-	} else {
-		$method = "transaction_show"
-		$params = @{
-			txid = $Txid
-		}	
-	Get-LbryJsonContent -Method $method -Params $params
+	process {
+		if ($Wallet) {
+			$method = "transaction_list"
+			Get-LbryJsonContent -Method $method
+			Return
+		} else {
+			$method = "transaction_show"
+			$params = @{
+				txid	 = $Txid
+			}
+			Get-LbryJsonContent -Method $method -Params $params
+		}
 	}
 }
 function Resolve-LbryUri() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Uri
 	)
 	$params = @{
-		uri = $Uri
+		uri	    = $Uri
 	}
-	$method = "resolve"
-	Get-LbryJsonContent -Method $method -Params $params
+	begin { $method = "resolve" }
+	process {
+		Get-LbryJsonContent -Method $method -Params $params
+	}
 }
 function Get-LbryVersion() {
+	[CmdletBinding()]
 	$method = "version"
 	Get-LbryJsonContent -Method $method
 }
 function Get-LbryWalletAddressList() {
+	[CmdletBinding()]
 	$method = "wallet_list"
 	Get-LbryJsonContent -Method $method
 }
 function Get-LbryWalletAddressUnused() {
+	[CmdletBinding()]
 	$method = "wallet_unused_address"
 	Get-LbryJsonContent -Method $method
 }
 function New-LbryWalletAddress() {
+	[CmdletBinding()]
 	$method = "wallet_new_address"
 	Get-LbryJsonContent -Method $method
 }
 function Get-LbryWalletBalance() {
-	$method = "wallet_balance"
-	Get-LbryJsonContent -Method $method
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $false)]
+
+		[String]$Address,
+		[Parameter(Position = 1, Mandatory = $false)]
+		[Alias('include_unconfirmed')]
+		[Boolean]$IncludeUnconfirmed
+	)
+	begin { $method = "wallet_balance" }
+	process {
+		if ($Address) {
+			$params = @{
+				address	    = $Address
+			}
+			if ($IncludeUnconfirmed) {
+				$params.Add("include_unconfimed", $IncludeUnconfirmed)
+			}
+			Get-LbryJsonContent -Method $method -Params $params
+			Return
+		} else {
+			Get-LbryJsonContent -Method $method
+		}
+	}
 }
 function Send-LbryWalletCredits() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Address,
-		[Parameter(Position = 1, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 1, Mandatory = $true)]
 		[Float]$Amount
 	)
-	$method = "send_amount_to_address"
-	$params = @{
-		amount = $Amount
+	begin { $method = "send_amount_to_address" }
+	process {
+		$params = @{
+			amount	   = $Amount
+		}
+		$params.Add("address", $Address)
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	$params.Add("address", $Address)
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryWalletPublicKey() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Address
 	)
-	$method = "wallet_public_key"
-	$params = @{
-		address = $Address
+	begin { $method = "wallet_public_key" }
+	process {
+		$params = @{
+			address	    = $Address
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
 function Get-LbryWalletTransactionList() {
+	[CmdletBinding()]
 	$method = "transaction_list"
 	Get-LbryJsonContent -Method $method
 }
 function Test-LbryWalletAddressOwnership() {
+	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, Mandatory = $true)]
+		[Parameter(ValueFromPipelineByPropertyName = $true, Position = 0, Mandatory = $true)]
 		[String]$Address
 	)
-	$method = "wallet_is_address_mine"
-	$params = @{
-		address = $Address
+	begin { $method = "wallet_is_address_mine" }
+	process {
+		$params = @{
+			address	    = $Address
+		}
+		Get-LbryJsonContent -Method $method -Params $params
 	}
-	Get-LbryJsonContent -Method $method -Params $params
 }
